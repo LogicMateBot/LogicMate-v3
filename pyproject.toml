@@ -1,0 +1,17 @@
+[project]
+name = "logicmate-v3"
+version = "3.0.0"
+description = "Interactive Assistance Bot on Algorithm Programs and Programming Diagrams for the course “Introduction to Algorithmics”"
+authors = [
+    { name = "Vladimir Curiel", email = "voco0001@ce.pucmm.edu.do" },
+    { name = "Natasha López", email = "nmlc0001@ce.pucmm.edu.do" },
+]
+license = { text = "EULA: Evaluation and Non-Commercial Use License" }
+readme = "README.md"
+requires-python = "3.10.16"
+dependencies = ["pydantic==2.11.1"]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
