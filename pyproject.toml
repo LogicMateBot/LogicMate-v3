@@ -8,10 +8,16 @@ authors = [
 ]
 license = { text = "EULA: Evaluation and Non-Commercial Use License" }
 readme = "README.md"
-requires-python = "3.10.16"
-dependencies = ["pydantic==2.11.1"]
-
+requires-python = "==3.10.16"
+dependencies = [
+    "pydantic (==2.11.1)",
+    "torch (==2.6.0)",
+    "scenedetect (==0.6.6)",
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{ include = "logicmate", from = "src" }]
