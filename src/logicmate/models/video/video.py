@@ -9,7 +9,9 @@ from logicmate.models.predictions.predictions.prediction import PredictionBase
 
 class ImageModel(BaseModel):
     path: str
-    category: Optional[str] = Field(default=None, description="Category of the image")
+    categories: Optional[List[str]] = Field(
+        default=None, description="Category of the image"
+    )
     predictions: Optional[List[PredictionBase]] = Field(
         default=None, description="List of predictions associated with the image"
     )
@@ -19,6 +21,9 @@ class Scene(BaseModel):
     scene_id: int
     start_timestamp: str
     end_timestamp: str
+    categories: Optional[List[str]] = Field(
+        default=None, description="Category of the scene"
+    )
     images: List[ImageModel]
 
 
@@ -58,7 +63,7 @@ class Video(BaseModel):
                 end_timestamp=str(end_time.get_timecode()),
                 images=[
                     ImageModel(
-                        path=f"{id}-Scene-{i:03d}-{j:02d}.png",
+                        path=f"media/images/{id}/scenes/{id}-Scene-{i:03d}-{j:02d}.png",
                     )
                     for j in range(1, images_per_scene)
                 ],
