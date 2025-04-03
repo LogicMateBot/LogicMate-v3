@@ -4,3 +4,6 @@ media
 model
 .ruff_cache
 __pycache__
+.env
+weights
+weights-v1

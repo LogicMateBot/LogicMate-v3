@@ -1,37 +1,45 @@
 from typing import Literal
 
+from pydantic import Field
+
 from logicmate.models.predictions.predictions.prediction import PredictionBase
 
 
 class FlowgorithmInitialNode(PredictionBase):
-    prediction_class: Literal["initial-node"]
-    text: Literal["Inicio"]
+    class_name: Literal["initial-node"] = Field(default=Literal["initial-node"])
+    text: Literal["Inicio"] = Field(
+        default="Inicio",
+        description="Text associated with the initial node prediction.",
+    )
 
 
 class FlowgorithmFinalNode(PredictionBase):
-    prediction_class: Literal["final-node"]
-    text: Literal["Fin"]
+    class_name: Literal["final-node"] = Field(default=Literal["final-node"])
+    text: Literal["Fin"] = Field(
+        default="Fin",
+        description="Text associated with the final node prediction.",
+    )
 
 
 class FlowgorithmInputNode(PredictionBase):
-    prediction_class: Literal["input-node"]
+    class_name: Literal["input-node"] = Field(default=Literal["input-node"])
 
 
 class FlowgorithmOutputNode(PredictionBase):
-    prediction_class: Literal["output-node"]
+    class_name: Literal["output-node"] = Field(default=Literal["output-node"])
 
 
 class FlowgorithmOperationNode(PredictionBase):
-    prediction_class: Literal["operation-node"]
+    class_name: Literal["operation-node"] = Field(default=Literal["operation-node"])
 
 
 class FlowgorithmDecisionNode(PredictionBase):
-    prediction_class: Literal["decision-node"]
+    class_name: Literal["decision-node"] = Field(default=Literal["decision-node"])
 
 
 class FlowgorithmNormalArrow(PredictionBase):
-    prediction_class: Literal["normal-arrow"]
+    class_name: Literal["normal-arrow"] = Field(default=Literal["normal-arrow"])
 
 
 class FlowgorithmDecisionArrow(PredictionBase):
-    prediction_class: Literal["decision-arrow"]
+    class_name: Literal["decision-arrow"] = Field(default=Literal["decision-arrow"])

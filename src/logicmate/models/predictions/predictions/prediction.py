@@ -15,4 +15,7 @@ class PredictionBase(BaseModel, ABC):
     explanation: Optional[str] = Field(
         default=None, description="Explanation of the prediction"
     )
-    class_name: str
+    class_name: Optional[str] = Field(
+        default=None,
+        description="Class name of the prediction. This is used for classification tasks.",
+    )

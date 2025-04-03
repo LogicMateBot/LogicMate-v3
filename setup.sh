@@ -77,52 +77,16 @@ if [ $? -ne 0 ]; then
 fi
 echo "Dependencies installed."
 
-# Download Yolo v12
-if [ ! -d "model/yolov12" ]; then
-    echo "Yolo v12 not found. Cloning the repository..."
-    if [ ! -d "model" ]; then
-        mkdir model
-    fi
-    cd model
-    echo "Cloning Yolo v12 repository..."
-    git clone https://github.com/sunsmarterjie/yolov12
-    if [ $? -ne 0 ]; then
-        echo "Failed to clone Yolo v12 repository"
-        exit 1
-    fi
-    cd yolov12
-    echo "Yolo v12 cloned successfully."
-    cd yolov12
-    echo "Installing Yolo v12 dependencies..."
-    pip install -r requirements.txt
-    pip install -e .
-    echo "Yolo v12 dependencies installed."
-    echo "Downloading Yolo v12 model..."
-    curl -L "https://github.com/sunsmarterjie/yolov12/releases/download/turbo/yolov12l.pt" -o yolov12l.pt
-    if [ $? -ne 0 ]; then
-        echo "Failed to download Yolo v12 model"
-        exit 1
-    fi
-    cd .. && cd ..
-    echo "Yolo v12 model downloaded successfully."
-else
-    echo "Yolo v12 already exists."
-fi
-
 # Download model Weights
-if [ ! -d "model/weights" ]; then
-    echo "model Weights not found. Cloning the repository..."
-    if [ ! -d "model" ]; then
-        mkdir model
-    fi
-    cd model
-    echo "Cloning model Weights repository..."
+if [ ! -d "weights" ]; then
+    echo "Model Weights not found. Cloning the repository..."
+    echo "Cloning Models Weights repository..."
     if [ ! -d "weights" ]; then
         mkdir weights
     fi
     cd weights
     echo "Cloning model Weights repository..."
-    git clone https://github.com/LogicMateBot/model-v1.git .
+    git clone https://github.com/LogicMateBot/Models-v2.git .
     if [ $? -ne 0 ]; then
         echo "Failed to clone model Weights repository"
         exit 1
