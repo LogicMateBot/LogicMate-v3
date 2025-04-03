@@ -5,6 +5,7 @@ import os
 from inference_sdk import InferenceHTTPClient
 
 from logicmate.models.ia.pyscenedetect.psycenedetect import PySceneDetect
+from logicmate.models.ia.surya.surya import Surya
 from logicmate.models.ia.yolo.code_detector.code_detector import CodeDetector
 from logicmate.models.ia.yolo.code_diagram_detector.code_diagram_detector import (
     CodeDiagramDetector,
@@ -12,6 +13,22 @@ from logicmate.models.ia.yolo.code_diagram_detector.code_diagram_detector import
 from logicmate.models.video.video import Video
 from logicmate.utils.directory.directory import DirectoryUtil
 from logicmate.utils.file.file import FileUtil
+
+
+def remove_similar_images(
+    video: Video,
+) -> Video:
+    """
+    Removes similar images from the video based on a similarity threshold.
+
+    Args:
+        video (Video): The video object to be processed.
+        threshold (float): The similarity threshold for removing images.
+
+    Returns:
+        Video: The processed video with similar images removed.
+    """
+    # Placeholder for actual implementation
 
 
 def predict_diagram_classification(
@@ -82,9 +99,27 @@ def predict_code_snippet(
     code_detector: CodeDetector = CodeDetector(client=client)
     video = code_detector.predict_from_video(
         video=video,
-        use_client=True,
-        show_result=True,
+        use_client=False,
+        show_result=False,
     )
+    return video
+
+
+def extract_video_text(
+    video: Video,
+) -> Video:
+    """
+    Extracts text from the video.
+
+    Args:
+        video (Video): The video object to be processed.
+
+    Returns:
+        Video: The processed video with extracted text.
+    """
+    surya = Surya()
+    video = surya.predict_video(video=video)
+
     return video
 
 
@@ -103,15 +138,20 @@ def predict_by_video_categories(
 
 
 def start_bot(path_to_file: str) -> None:
-    logging.info("Starting the bot...")
+    if not path_to_file:
+        raise ValueError("Path to file is required.")
 
-    API_KEY = os.getenv("API_KEY")
+    API_KEY: str | None = os.getenv(key="API_KEY")
     if not API_KEY:
         raise ValueError("API_KEY environment variable is not set.")
-    API_URL = os.getenv("API_URL")
+    API_URL: str | None = os.getenv(key="API_URL")
     if not API_URL:
         raise ValueError("API_URL environment variable is not set.")
     CLIENT = InferenceHTTPClient(api_url=API_URL, api_key=API_KEY)
+    if not CLIENT:
+        raise ValueError("Inference client is not initialized.")
+
+    logging.info(msg="Starting the bot...")
 
     scene_detector: PySceneDetect = PySceneDetect()
     codeDiagramDetector: CodeDiagramDetector = CodeDiagramDetector(client=CLIENT)
@@ -120,7 +160,9 @@ def start_bot(path_to_file: str) -> None:
     if not file_exist:
         raise FileNotFoundError(f"File not found: {path_to_file}")
 
-    output_dir: str = DirectoryUtil.ensure_directory(f"media/images/{file_name}/scenes")
+    output_dir: str = DirectoryUtil.ensure_directory(
+        path=f"media/images/{file_name}/scenes"
+    )
 
     video: Video = scene_detector.process_video(
         video_path=file_path, output_dir=output_dir
@@ -129,11 +171,9 @@ def start_bot(path_to_file: str) -> None:
     if not video:
         raise ValueError("Video is None. Please check the video processing.")
 
-    print(json.dumps(video.model_dump(mode="json"), indent=4, ensure_ascii=False))
-
     video = codeDiagramDetector.predict_from_video(
         video=video,
-        use_client=True,
+        use_client=False,
     )
 
     if not video:
@@ -145,8 +185,6 @@ def start_bot(path_to_file: str) -> None:
     if not video.scenes:
         raise ValueError("Video scenes are None. Please check the video processing.")
 
-    print(json.dumps(video.model_dump(mode="json"), indent=4, ensure_ascii=False))
-
     video = predict_by_video_categories(
         video=video,
         client=CLIENT,
@@ -155,5 +193,5 @@ def start_bot(path_to_file: str) -> None:
     if not video:
         raise ValueError("Video is None. Please check the video processing.")
 
-    print(json.dumps(video.model_dump(mode="json"), indent=4, ensure_ascii=False))
-    logging.info("Bot finished processing.")
+    video = extract_video_text(video=video)
+    logging.info(msg="Bot finished processing.")

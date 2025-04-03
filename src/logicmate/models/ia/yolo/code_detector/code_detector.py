@@ -23,7 +23,7 @@ class CodeDetector(Yolo):
     model_id: str = "code-snippet-video-class-detection/27"
     min_amount_of_predictions: int = 4
     valid_classes: set[str] = Field(
-        default_factory=lambda: frozenset({"code_snippet", "code-bracket"})
+        default_factory=lambda: frozenset(iterable={"code_snippet", "code-bracket"})
     )
 
     def filter_images_from_scene_by_min_amount_of_predictions(
@@ -42,7 +42,7 @@ class CodeDetector(Yolo):
             scene.images = [
                 image
                 for image in scene.images
-                if len(image.predictions) >= self.min_amount_of_predictions
+                if len(obj=image.predictions) >= self.min_amount_of_predictions
             ]
         return video
 
@@ -61,15 +61,15 @@ class CodeDetector(Yolo):
         """
         formatted_predictions: list[CodePrediction] = []
 
-        for i, (xyxy, class_name) in enumerate(
-            zip(detections.xyxy, detections.data["class_name"])
+        for xyxy, class_name in enumerate(
+            iterable=zip(iter1=detections.xyxy, iter2=detections.data["class_name"])
         ):
             x_min, y_min, x_max, y_max = xyxy
 
-            width = x_max - x_min
-            height = y_max - y_min
-            x_center = x_min + width / 2
-            y_center = y_min + height / 2
+            width: float = x_max - x_min
+            height: float = y_max - y_min
+            x_center: float = x_min + width / 2
+            y_center: float = y_min + height / 2
 
             match class_name:
                 case "code_snippet":
@@ -89,7 +89,7 @@ class CodeDetector(Yolo):
                 case _:
                     pass
 
-            formatted_predictions.append(prediction)
+            formatted_predictions.append(object=prediction)
 
         return formatted_predictions
 
@@ -148,8 +148,8 @@ class CodeDetector(Yolo):
         detections_results = Detections.from_ultralytics(
             ultralytics_results=ultralytics_results
         ).with_nms()
-        predictions = self.parse_detections_to_predictions(
-            detections=detections_results
+        predictions: List[CodeSnippet | CodeBracket] = (
+            self.parse_detections_to_predictions(detections=detections_results)
         )
 
         if show_result:
@@ -160,7 +160,9 @@ class CodeDetector(Yolo):
 
         return predictions
 
-    def predict_with_client(self, image_path, show_result=False):
+    def predict_with_client(
+        self, image_path, show_result=False
+    ) -> list | List[CodePrediction]:
         """
         Predicts the categories of images in the
         video using the YOLO model.
@@ -171,34 +173,36 @@ class CodeDetector(Yolo):
             List[PredictionBase]: A list of predictions for the image.
         """
         if not self.client:
-            logging.error("Inference client is not initialized.")
+            logging.error(msg="Inference client is not initialized.")
             raise ValueError("Inference client is not initialized.")
         if not self.model_id:
-            logging.error("Model ID is not set.")
+            logging.error(msg="Model ID is not set.")
             raise ValueError("Model ID is not set.")
         if not image_path:
-            logging.error("Image path is not provided.")
+            logging.error(msg="Image path is not provided.")
             raise ValueError("Image path is not provided.")
 
-        logging.info(f"Predicting with client: {self.client}, image: {image_path}")
-        results = self.client.infer(
+        logging.info(msg=f"Predicting with client: {self.client}, image: {image_path}")
+        results: dict | List[dict] = self.client.infer(
             inference_input=image_path,
             model_id=self.model_id,
         )
 
-        raw_predictions = results.get("predictions", [])
-        predictions = self.parse_raw_predictions_to_prediction_objects(
-            raw_predictions=raw_predictions
+        raw_predictions: dict = results.get("predictions", [])
+        predictions: List[CodePrediction] = (
+            self.parse_raw_predictions_to_prediction_objects(
+                raw_predictions=raw_predictions
+            )
         )
 
         if predictions is None:
             logging.warning(
-                f"Image: {image_path} has no predictions or not enough predictions."
+                msg=f"Image: {image_path} has no predictions or not enough predictions."
             )
             return []
         if len(predictions) < self.min_amount_of_predictions:
             logging.warning(
-                f"Image: {image_path} has no predictions or not enough predictions."
+                msg=f"Image: {image_path} has no predictions or not enough predictions."
             )
             return []
 
@@ -207,7 +211,7 @@ class CodeDetector(Yolo):
                 image_path=image_path,
                 predictions=raw_predictions,
             )
-        logging.info(f"Image: {image_path}, predicted.")
+        logging.info(msg=f"Image: {image_path}, predicted.")
         return predictions
 
     def predict_from_video(
@@ -235,10 +239,10 @@ class CodeDetector(Yolo):
 
                 if (
                     image.predictions is None
-                    or len(image.predictions) < self.min_amount_of_predictions
+                    or len(obj=image.predictions) < self.min_amount_of_predictions
                 ):
                     logging.warning(
-                        f"Image: {image.path} has no predictions or not enough predictions."
+                        msg=f"Image: {image.path} has no predictions or not enough predictions."
                     )
                     continue
 

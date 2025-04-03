@@ -52,22 +52,22 @@ class Video(BaseModel):
         # Will be 3 images per scene, but as we are starting from 1, we need to add 1
         images_per_scene = 4
 
-        id = video.name
-        duration = str(video.duration)
-        scenes_list = []
+        id: bytes | str = video.name
+        duration = str(object=video.duration)
+        scenes_list: list = []
 
-        for i, (start_time, end_time) in enumerate(scenes, start=1):
+        for i, (start_time, end_time) in enumerate(iterable=scenes, start=1):
             scene = Scene(
                 scene_id=i,
-                start_timestamp=str(start_time.get_timecode()),
-                end_timestamp=str(end_time.get_timecode()),
+                start_timestamp=str(object=start_time.get_timecode()),
+                end_timestamp=str(object=end_time.get_timecode()),
                 images=[
                     ImageModel(
                         path=f"media/images/{id}/scenes/{id}-Scene-{i:03d}-{j:02d}.png",
                     )
-                    for j in range(1, images_per_scene)
+                    for j in range(start=1, stop=images_per_scene)
                 ],
             )
-            scenes_list.append(scene)
+            scenes_list.append(object=scene)
 
         return cls(id=id, duration=duration, scenes=scenes_list)

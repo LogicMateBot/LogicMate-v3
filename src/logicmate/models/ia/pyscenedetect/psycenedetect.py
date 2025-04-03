@@ -1,10 +1,11 @@
 import json
 import logging
-from typing import FrozenSet, Literal, Set
+from typing import FrozenSet, List, Literal, Set, Tuple
 
 import numpy as np
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from scenedetect import AdaptiveDetector, StatsManager, open_video, save_images
+from scenedetect.frame_timecode import FrameTimecode
 from scenedetect.scene_detector import SceneDetector
 from scenedetect.scene_manager import Interpolation, SceneManager
 from scenedetect.video_stream import VideoStream
@@ -35,7 +36,7 @@ class PySceneDetect(BaseModel):
             kernel_size=None,
         )
     )
-    model_config = {
+    model_config: ConfigDict = {
         "arbitrary_types_allowed": True,
     }
 
@@ -75,7 +76,7 @@ class PySceneDetect(BaseModel):
         Returns:
             VideoStream: The opened video stream.
         """
-        video = open_video(path=video_path)
+        video: VideoStream = open_video(path=video_path)
         self.set_video(video=video)
         logging.info(msg="Video opened: {}".format(video))
         return video
@@ -108,7 +109,9 @@ class PySceneDetect(BaseModel):
             )
 
         logging.info(msg="Saving scenes...")
-        scene_list = self.scene_manager.get_scene_list()
+        scene_list: List[Tuple[FrameTimecode, FrameTimecode]] = (
+            self.scene_manager.get_scene_list()
+        )
 
         save_images(
             video=self.video,
@@ -138,7 +141,7 @@ class PySceneDetect(BaseModel):
         self.save_scenes(output_dir=output_dir)
         logging.info(msg="Scenes detected and saved.")
 
-        video_result = Video.create_from_video_scenes(
+        video_result: Video = Video.create_from_video_scenes(
             video=self.video,
             scenes=self.scene_manager.get_scene_list(),
         )
@@ -156,7 +159,7 @@ class PySceneDetect(BaseModel):
         Returns:
             Video: The processed video with detected scenes.
         """
-        self.open_and_set_video(video_path)
+        self.open_and_set_video(video_path=video_path)
         return self.detect_and_save_scenes(output_dir=output_dir)
 
 
@@ -168,7 +171,9 @@ if __name__ == "__main__":
     if not file_exist:
         raise FileNotFoundError(f"File not found: {path_to_file}")
 
-    output_dir: str = DirectoryUtil.ensure_directory(f"media/images/{file_name}/scenes")
+    output_dir: str = DirectoryUtil.ensure_directory(
+        path=f"media/images/{file_name}/scenes"
+    )
 
     # Create a PySceneDetect instance
     scene_detector: PySceneDetect = PySceneDetect()
@@ -178,4 +183,4 @@ if __name__ == "__main__":
         video_path=file_path, output_dir=output_dir
     )
 
-    print(json.dumps(video.model_dump(mode="json"), indent=4, ensure_ascii=False))
+    print(json.dumps(obj=video.model_dump(mode="json"), indent=4, ensure_ascii=False))
