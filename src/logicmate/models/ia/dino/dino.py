@@ -1,5 +1,4 @@
-from typing import Any
-
+import logging
 from numpy import ndarray
 from PIL import Image
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -52,7 +51,7 @@ class Dino(BaseModel):
         return cosine_similarity(X=features)
 
     def filter_similar_images(
-        self, features, similarity_matrix, threshold=0.995
+        self, features: list, similarity_matrix: ndarray, threshold: float = 0.995
     ) -> list:
         amount_of_features: int = len(features)
         selected_indices: list = []
@@ -83,18 +82,50 @@ class Dino(BaseModel):
         feature_list: list = []
 
         for scene in video.scenes:
+            logging.info(msg=f"Getting features of scene: {scene.scene_id}")
             for image in scene.images:
+                if not image.path:
+                    raise ValueError("Image path is required")
+                logging.info(msg=f"Getting features of image: {image.path}")
                 image_features: list = self.extract_features(image_path=image.path)
                 feature_list.append(image_features)
 
         flattened_feature_list: list = [feature.flatten() for feature in feature_list]
         return flattened_feature_list
 
-    def filter_images(self, video: Video) -> Video:
+    def filter_empty_scenes(self, video: Video) -> Video:
+        """
+        Filter empty scenes from the video.
+        Args:
+            video (Video): Video object to process.
+        Returns:
+            Video: Video object with empty scenes removed.
+        """
+        if not video:
+            raise ValueError("Video is required")
+        if not video.scenes:
+            raise ValueError("Scenes are required")
+
+        logging.info(msg="Filtering empty scenes...")
+        filtered_scenes: list = [
+            scene for scene in video.scenes if scene.images and len(scene.images) > 0
+        ]
+
+        video.scenes = filtered_scenes
+        logging.info(msg="Empty scenes filtered.")
+        return video
+
+    def filter_images(self, video: Video, threshold: float) -> Video:
+        logging.info(msg="Filtering images...")
+        if not video:
+            raise ValueError("Video is required")
+        if not video.scenes:
+            raise ValueError("Scenes are required")
+
         features: list = self.get_images_features_from_video(video=video)
         similarity_matrix: ndarray = self.get_similarity(features=features)
         selected_indices: list = self.filter_similar_images(
-            features=features, similarity_matrix=similarity_matrix
+            features=features, similarity_matrix=similarity_matrix, threshold=threshold
         )
 
         images_to_remove: list = []
@@ -104,7 +135,6 @@ class Dino(BaseModel):
             for image in scene.images:
                 if index not in selected_indices:
                     images_to_remove.append(image)
-                image.features = features[index]
                 index += 1
 
         for scene in video.scenes:
@@ -112,4 +142,5 @@ class Dino(BaseModel):
                 image for image in scene.images if image not in images_to_remove
             ]
 
-        return video
+        logging.info(msg="Images filtered.")
+        return self.filter_empty_scenes(video=video)

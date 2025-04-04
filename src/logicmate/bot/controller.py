@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 
@@ -29,8 +28,8 @@ def remove_similar_images(
     Returns:
         Video: The processed video with similar images removed.
     """
-    dino: Dino = Dino()
-    video = dino.filter_images(video=video, threshold=0.8)
+    dino: Dino = Dino(model_name="facebook/dinov2-base")
+    video = dino.filter_images(video=video, threshold=0.995)
     return video
 
 
