@@ -23,7 +23,7 @@ class CodeDetector(Yolo):
     model_id: str = "code-snippet-video-class-detection/27"
     min_amount_of_predictions: int = 4
     valid_classes: set[str] = Field(
-        default_factory=lambda: frozenset(iterable={"code_snippet", "code-bracket"})
+        default_factory=lambda: frozenset({"code_snippet", "code-bracket"})
     )
 
     def filter_images_from_scene_by_min_amount_of_predictions(
@@ -42,7 +42,7 @@ class CodeDetector(Yolo):
             scene.images = [
                 image
                 for image in scene.images
-                if len(obj=image.predictions) >= self.min_amount_of_predictions
+                if len(image.predictions) >= self.min_amount_of_predictions
             ]
         return video
 
@@ -61,9 +61,7 @@ class CodeDetector(Yolo):
         """
         formatted_predictions: list[CodePrediction] = []
 
-        for xyxy, class_name in enumerate(
-            iterable=zip(iter1=detections.xyxy, iter2=detections.data["class_name"])
-        ):
+        for xyxy, class_name in zip(detections.xyxy, detections.data["class_name"]):
             x_min, y_min, x_max, y_max = xyxy
 
             width: float = x_max - x_min
@@ -89,7 +87,7 @@ class CodeDetector(Yolo):
                 case _:
                     pass
 
-            formatted_predictions.append(object=prediction)
+            formatted_predictions.append(prediction)
 
         return formatted_predictions
 
@@ -239,7 +237,7 @@ class CodeDetector(Yolo):
 
                 if (
                     image.predictions is None
-                    or len(obj=image.predictions) < self.min_amount_of_predictions
+                    or len(image.predictions) < self.min_amount_of_predictions
                 ):
                     logging.warning(
                         msg=f"Image: {image.path} has no predictions or not enough predictions."

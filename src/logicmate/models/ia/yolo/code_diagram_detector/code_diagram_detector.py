@@ -18,19 +18,15 @@ class CodeDiagramDetector(Yolo):
     model_weight: str = "weights/code-diagram-detector-weights.pt"
     model_id: str = "code-vs-diagram/1"
     valid_classes: Set[str] = Field(
-        default_factory=lambda: frozenset(iterable={"code", "diagram"})
+        default_factory=lambda: frozenset({"code", "diagram"})
     )
 
     def determine_image_category(self, predictions: list[PredictionBase]) -> str:
         code_count: int = sum(
-            iterable=(
-                1 for prediction in predictions if prediction.class_name == "code"
-            )
+            (1 for prediction in predictions if prediction.class_name == "code")
         )
         diagram_count: int = sum(
-            iterable=(
-                1 for prediction in predictions if prediction.class_name == "diagram"
-            )
+            (1 for prediction in predictions if prediction.class_name == "diagram")
         )
 
         return (
@@ -42,8 +38,8 @@ class CodeDiagramDetector(Yolo):
         )
 
     def determine_scene_category(self, image_categories: List[str]) -> List[str]:
-        code_votes: int = image_categories.count(value="code")
-        diagram_votes: int = image_categories.count(value="diagram")
+        code_votes: int = image_categories.count("code")
+        diagram_votes: int = image_categories.count("diagram")
 
         if code_votes == 0 and diagram_votes == 0:
             return ["none"]
@@ -59,17 +55,17 @@ class CodeDiagramDetector(Yolo):
         self, scene_categories: List[List[str]], total_scenes: int
     ) -> List[str]:
         code_votes: int = sum(
-            iterable=(1 for category in scene_categories if "code" in category)
+            (1 for category in scene_categories if "code" in category)
         )
         diagram_votes: int = sum(
-            iterable=(1 for category in scene_categories if "diagram" in category)
+            (1 for category in scene_categories if "diagram" in category)
         )
         video_categories: list = []
         threshold: float = total_scenes * 0.3
         if code_votes > threshold:
-            video_categories.append(object="code")
+            video_categories.append("code")
         if diagram_votes > threshold:
-            video_categories.append(object="diagram")
+            video_categories.append("diagram")
         return video_categories
 
     def filter_none_scene_category(self, video: Video) -> Video:
@@ -88,9 +84,7 @@ class CodeDiagramDetector(Yolo):
         video.scenes = [
             scene
             for scene in video.scenes
-            if any(
-                iterable=(category in scene.categories for category in video.categories)
-            )
+            if any((category in scene.categories for category in video.categories))
         ]
         return video
 
@@ -121,9 +115,7 @@ class CodeDiagramDetector(Yolo):
         """
         formatted_predictions: list[PredictionBase] = []
 
-        for xyxy, class_name in enumerate(
-            itruediv=zip(iter1=detections.xyxy, iter2=detections.data["class_name"])
-        ):
+        for xyxy, class_name in zip(detections.xyxy, detections.data["class_name"]):
             x_min, y_min, x_max, y_max = xyxy
 
             width: float = x_max - x_min
@@ -170,7 +162,7 @@ class CodeDiagramDetector(Yolo):
                 explanation=None,
                 class_name=prediction["class"],
             )
-            formatted_predictions.append(object=prediction)
+            formatted_predictions.append(prediction)
 
         return formatted_predictions
 
@@ -263,28 +255,28 @@ class CodeDiagramDetector(Yolo):
                     image.predictions = self.predict(
                         image_path=image.path, show_result=show_result
                     )
-                if len(obj=image.predictions) == 0:
+                if len(image.predictions) == 0:
                     image.categories = ["none"]
-                    image_categories.append(object="none")
+                    image_categories.append("none")
                     continue
 
                 category = self.determine_image_category(predictions=image.predictions)
                 if category in ["code", "diagram"]:
                     image.categories = [category]
-                    image_categories.append(object=category)
+                    image_categories.append(category)
                 else:
                     image.categories = ["code", "diagram"]
-                    image_categories.append(object="code")
-                    image_categories.append(object="diagram")
+                    image_categories.append("code")
+                    image_categories.append("diagram")
 
             scene_category: List[str] = self.determine_scene_category(
                 image_categories=image_categories
             )
             scene.categories = scene_category
-            scene_categories.append(object=scene_category)
+            scene_categories.append(scene_category)
 
         video.categories = self.determine_video_category(
-            scene_categories=scene_categories, total_scenes=len(obj=video.scenes)
+            scene_categories=scene_categories, total_scenes=len(video.scenes)
         )
 
         video = self.filter_none_scene_category(video=video)

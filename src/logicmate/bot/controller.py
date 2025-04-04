@@ -4,6 +4,7 @@ import os
 
 from inference_sdk import InferenceHTTPClient
 
+from logicmate.models.ia.dino.dino import Dino
 from logicmate.models.ia.pyscenedetect.psycenedetect import PySceneDetect
 from logicmate.models.ia.surya.surya import Surya
 from logicmate.models.ia.yolo.code_detector.code_detector import CodeDetector
@@ -28,11 +29,13 @@ def remove_similar_images(
     Returns:
         Video: The processed video with similar images removed.
     """
-    # Placeholder for actual implementation
+    dino: Dino = Dino()
+    video = dino.filter_images(video=video, threshold=0.8)
+    return video
 
 
 def predict_diagram_classification(
-    video: Video,
+    video: Video,  # Placeholder for actual implementation
     client: InferenceHTTPClient,
 ) -> Video:
     """
@@ -184,6 +187,11 @@ def start_bot(path_to_file: str) -> None:
         )
     if not video.scenes:
         raise ValueError("Video scenes are None. Please check the video processing.")
+
+    video = remove_similar_images(video=video)
+
+    if not video:
+        raise ValueError("Video is None. Please check the video processing.")
 
     video = predict_by_video_categories(
         video=video,

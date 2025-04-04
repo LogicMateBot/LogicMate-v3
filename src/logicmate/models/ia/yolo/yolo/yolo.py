@@ -129,12 +129,12 @@ class Yolo(BaseModel, ABC):
     def sort_predictions_by_x(
         self, predictions: list[PredictionBase]
     ) -> list[PredictionBase]:
-        return sorted(iterable=predictions, key=lambda obj: obj.x)
+        return sorted(predictions, key=lambda obj: obj.x)
 
     def sort_predictions_by_y(
         self, predictions: list[PredictionBase]
     ) -> list[PredictionBase]:
-        return sorted(iterable=predictions, key=lambda obj: obj.y)
+        return sorted(predictions, key=lambda obj: obj.y)
 
     def show_image_with_predictions(
         self,

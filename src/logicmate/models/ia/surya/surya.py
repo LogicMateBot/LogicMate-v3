@@ -40,13 +40,13 @@ class Surya(BaseModel):
         return buf.getvalue()
 
     def get_predictions(self, image) -> List[OCRResult]:
-        if isinstance(obj=image, class_or_tuple=bytes):
+        if isinstance(image, bytes):
             image: Image.Image = Image.open(fp=BytesIO(initial_bytes=image))
 
-        elif isinstance(obj=image, class_or_tuple=np.ndarray):
+        elif isinstance(image, np.ndarray):
             image = Image.fromarray(obj=image)
 
-        elif not isinstance(obj=image, class_or_tuple=Image.Image):
+        elif not isinstance(image, Image.Image):
             raise TypeError("Tipo de imagen no soportado")
 
         return self.recognition_predictor(
@@ -86,7 +86,7 @@ class Surya(BaseModel):
         if not bounding_boxes:
             raise ValueError("Bounding boxes are required")
 
-        x1, y1, x2, y2 = map(func=int, iterable=bounding_boxes)
+        x1, y1, x2, y2 = map(int, bounding_boxes)
 
         cv2.rectangle(
             img=image, pt1=(x1, y1), pt2=(x2, y2), color=(0, 255, 0), thickness=2
@@ -171,15 +171,15 @@ class Surya(BaseModel):
         w: Any = predictions.width
         h: Any = predictions.height
 
-        x1: int = int(x=x_center - w / 2)
-        y1: int = int(x=y_center - h / 2)
-        x2: int = int(x=x_center + w / 2)
-        y2: int = int(x=y_center + h / 2)
+        x1: int = int(x_center - w / 2)
+        y1: int = int(y_center - h / 2)
+        x2: int = int(x_center + w / 2)
+        y2: int = int(y_center + h / 2)
 
-        x1 = max(arg1=0, arg2=x1)
-        y1 = max(arg1=0, arg2=y1)
-        x2 = min(arg1=image.shape[1], arg2=x2)
-        y2 = min(arg1=image.shape[0], arg2=y2)
+        x1 = max(0, x1)
+        y1 = max(0, y1)
+        x2 = min(image.shape[1], x2)
+        y2 = min(image.shape[0], y2)
 
         scale_factor = 2
 

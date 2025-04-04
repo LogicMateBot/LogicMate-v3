@@ -54,7 +54,7 @@ class PySceneDetect(BaseModel):
             _ (np.ndarray): The image frame where the scene was detected.
             frame_num (int): The frame number where the scene was detected.
         """
-        logging.info(msg="Detected Scene: {} - {}".format(frame_num, frame_num + 1))
+        logging.info(msg=f"Detected Scene: {frame_num} - {frame_num + 1}")
 
     def set_video(self, video: VideoStream) -> None:
         """
@@ -64,7 +64,7 @@ class PySceneDetect(BaseModel):
             video (VideoStream): The video stream to be processed.
         """
         self.video = video
-        logging.info(msg="Video set: {}".format(video))
+        logging.info(msg=f"Video set: {video}")
 
     def open_and_set_video(self, video_path: str) -> VideoStream:
         """
@@ -78,7 +78,7 @@ class PySceneDetect(BaseModel):
         """
         video: VideoStream = open_video(path=video_path)
         self.set_video(video=video)
-        logging.info(msg="Video opened: {}".format(video))
+        logging.info(msg=f"Video opened: {video}")
         return video
 
     def detect_scenes(self) -> None:
@@ -122,7 +122,7 @@ class PySceneDetect(BaseModel):
             image_extension="png",
             encoder_param=9,  # best for png
         )
-        logging.info(msg="Saved {} scenes.".format(len(scene_list)))
+        logging.info(msg=f"Saved {len(scene_list)} scenes.")
 
     def detect_and_save_scenes(self, output_dir: str) -> Video:
         """
@@ -183,4 +183,4 @@ if __name__ == "__main__":
         video_path=file_path, output_dir=output_dir
     )
 
-    print(json.dumps(obj=video.model_dump(mode="json"), indent=4, ensure_ascii=False))
+    print(json.dumps(video.model_dump(mode="json"), indent=4, ensure_ascii=False))
