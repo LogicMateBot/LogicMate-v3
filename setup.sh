@@ -78,23 +78,43 @@ fi
 echo "Dependencies installed."
 
 # Download model Weights
-if [ ! -d "weights" ]; then
-    echo "Model Weights not found. Cloning the repository..."
-    echo "Cloning Models Weights repository..."
+if [ ! -d "weights-v1" ]; then
+    echo "Model Weights V1 not found. Cloning the repository..."
+    echo "Cloning Models V1 Weights repository..."
     if [ ! -d "weights" ]; then
         mkdir weights
     fi
     cd weights
-    echo "Cloning model Weights repository..."
-    git clone https://github.com/LogicMateBot/Models-v2.git .
+    echo "Cloning model Weights V1 repository..."
+    git clone https://github.com/LogicMateBot/Models-v1.git .
     if [ $? -ne 0 ]; then
-        echo "Failed to clone model Weights repository"
+        echo "Failed to clone model Weights V1 repository"
         exit 1
     fi
     cd .. && cd ..
-    echo "model Weights cloned successfully."
+    echo "model Weights V1 cloned successfully."
 else
-    echo "model Weights already exists."
+    echo "model Weights V1 already exists."
+fi
+
+# Download model Weights
+if [ ! -d "weights-v2" ]; then
+    echo "Model Weights V2 not found. Cloning the repository..."
+    echo "Cloning Models Weights V2 repository..."
+    if [ ! -d "weights" ]; then
+        mkdir weights
+    fi
+    cd weights
+    echo "Cloning model Weights V2 repository..."
+    git clone https://github.com/LogicMateBot/Models-v2.git .
+    if [ $? -ne 0 ]; then
+        echo "Failed to clone model Weights V2 repository"
+        exit 1
+    fi
+    cd .. && cd ..
+    echo "model Weights V2 cloned successfully."
+else
+    echo "model Weights V2 already exists."
 fi
 
 # Creating media directory
