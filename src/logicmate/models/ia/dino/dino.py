@@ -107,11 +107,13 @@ class Dino(BaseModel):
             raise ValueError("Scenes are required")
 
         logging.info(msg="Filtering empty scenes...")
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} before filtering")
         filtered_scenes: list = [
             scene for scene in video.scenes if scene.images and len(scene.images) > 0
         ]
 
         video.scenes = filtered_scenes
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} after filtering")
         logging.info(msg="Empty scenes filtered.")
         return video
 
