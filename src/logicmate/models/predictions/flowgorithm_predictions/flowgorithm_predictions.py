@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import Field
 
@@ -43,3 +43,15 @@ class FlowgorithmNormalArrow(PredictionBase):
 
 class FlowgorithmDecisionArrow(PredictionBase):
     class_name: Literal["decision-arrow"] = Field(default=Literal["decision-arrow"])
+
+
+FlowgorithmPrediction = Union[
+    FlowgorithmInitialNode,
+    FlowgorithmFinalNode,
+    FlowgorithmInputNode,
+    FlowgorithmOutputNode,
+    FlowgorithmOperationNode,
+    FlowgorithmDecisionNode,
+    FlowgorithmNormalArrow,
+    FlowgorithmDecisionArrow,
+]
