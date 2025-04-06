@@ -8,5 +8,5 @@ def main(path_to_file: str) -> None:
 
 
 if __name__ == "__main__":
-    path_to_file = "media/videos/6c26a5d1-5f67-4752-b1a4-7b5911cdd157.mp4"
+    path_to_file = "media/videos/21a10a54-4ac2-4eb8-8807-dcfbaab749ca.mp4"
     main(path_to_file=path_to_file)

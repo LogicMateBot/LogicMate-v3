@@ -10,6 +10,10 @@ from logicmate.models.ia.yolo.code_detector.code_detector import CodeDetector
 from logicmate.models.ia.yolo.code_diagram_detector.code_diagram_detector import (
     CodeDiagramDetector,
 )
+from logicmate.models.ia.yolo.diagram_type_detector.diagram_type_detector import (
+    DiagramTypeDetector,
+)
+from logicmate.models.ia.yolo.drawio_detector.drawio_detector import DrawioDetector
 from logicmate.models.video.video import Video
 from logicmate.utils.directory.directory import DirectoryUtil
 from logicmate.utils.file.file import FileUtil
@@ -34,7 +38,7 @@ def remove_similar_images(
 
 
 def predict_diagram_classification(
-    video: Video,  # Placeholder for actual implementation
+    video: Video,
     client: InferenceHTTPClient,
 ) -> Video:
     """
@@ -47,7 +51,17 @@ def predict_diagram_classification(
     Returns:
         Video: The processed video with predictions.
     """
-    pass
+    diagramTypeDetector: DiagramTypeDetector = DiagramTypeDetector(client=client)
+    video = diagramTypeDetector.predict_from_video(
+        video=video, use_client=False, show_result=False
+    )
+
+    if "drawio" in video.categories:
+        video = predict_drawio_diagram(video=video, client=client)
+    if "flowgorithm" in video.categories:
+        video = predict_flowgorithm_diagram(video=video, client=client)
+
+    return video
 
 
 def predict_drawio_diagram(
@@ -64,7 +78,11 @@ def predict_drawio_diagram(
     Returns:
         Video: The processed video with predictions.
     """
-    pass
+    drawioDetector: DrawioDetector = DrawioDetector(client=client)
+    video = drawioDetector.predict_from_video(
+        video=video, use_client=False, show_result=False
+    )
+    return video
 
 
 def predict_flowgorithm_diagram(
@@ -100,9 +118,7 @@ def predict_code_snippet(
     """
     code_detector: CodeDetector = CodeDetector(client=client)
     video = code_detector.predict_from_video(
-        video=video,
-        use_client=False,
-        show_result=False,
+        video=video, use_client=False, show_result=False
     )
     return video
 
@@ -133,7 +149,7 @@ def predict_by_video_categories(
         case ["code"]:
             video = predict_code_snippet(video=video, client=client)
         case ["diagram"]:
-            video = predict_diagram_classification(video=video)
+            video = predict_diagram_classification(video=video, client=client)
         case _:
             raise ValueError(f"Unknown category: {video.categories}")
     return video
