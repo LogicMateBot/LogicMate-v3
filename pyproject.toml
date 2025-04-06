@@ -15,7 +15,9 @@ dependencies = [
     "scenedetect (==0.6.6)",
     "ultralytics (==8.3.99)",
     "supervision (==0.25.1)",
-    "inference-sdk (>=0.45.0,<0.46.0)",
+    "inference-sdk (==0.45.0)",
+    "surya-ocr (==0.13.1)",
+    "scikit-learn (==1.6.1)",
 ]
 
 [build-system]
