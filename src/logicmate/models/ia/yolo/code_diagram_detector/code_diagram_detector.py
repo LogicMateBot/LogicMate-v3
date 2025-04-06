@@ -72,20 +72,24 @@ class CodeDiagramDetector(Yolo):
         """
         Filter out scenes with "none" category from the video.
         """
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} before filtering")
         video.scenes = [
             scene for scene in video.scenes if "none" not in scene.categories
         ]
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} after filtering")
         return video
 
     def filter_video_scenes_by_video_category(self, video: Video) -> Video:
         """
         Filter out scenes that do not match the video category.
         """
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} before filtering")
         video.scenes = [
             scene
             for scene in video.scenes
             if any((category in scene.categories for category in video.categories))
         ]
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} after filtering")
         return video
 
     def filter_images_by_scene_category(self, video: Video) -> Video:
@@ -104,15 +108,6 @@ class CodeDiagramDetector(Yolo):
         self,
         detections: list,
     ) -> List[PredictionBase]:
-        """
-        Abstract method to format detections into predictions.
-
-        Args:
-            detections (list): List of detections from the YOLO model.
-
-        Returns:
-            list: Formatted predictions.
-        """
         formatted_predictions: list[PredictionBase] = []
 
         for xyxy, class_name in zip(detections.xyxy, detections.data["class_name"]):
@@ -136,7 +131,7 @@ class CodeDiagramDetector(Yolo):
 
         return formatted_predictions
 
-    def parse_raw_predictions_to_prediction_objects(
+    def parse_raw_predictions_from_client_to_prediction_objects(
         self,
         raw_predictions: list,
     ) -> List[PredictionBase]:
@@ -225,7 +220,7 @@ class CodeDiagramDetector(Yolo):
 
         raw_predictions: dict = results.get("predictions", [])
         predictions: List[PredictionBase] = (
-            self.parse_raw_predictions_to_prediction_objects(
+            self.parse_raw_predictions_from_client_to_prediction_objects(
                 raw_predictions=raw_predictions
             )
         )
@@ -260,7 +255,9 @@ class CodeDiagramDetector(Yolo):
                     image_categories.append("none")
                     continue
 
-                category = self.determine_image_category(predictions=image.predictions)
+                category: str = self.determine_image_category(
+                    predictions=image.predictions
+                )
                 if category in ["code", "diagram"]:
                     image.categories = [category]
                     image_categories.append(category)
