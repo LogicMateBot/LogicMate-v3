@@ -22,19 +22,35 @@ class PySceneDetect(BaseModel):
     scene_manager: SceneManager = Field(
         default_factory=lambda: SceneManager(stats_manager=StatsManager())
     )
-    interpolation: Interpolation = Field(default_factory=lambda: Interpolation(4))
+    interpolation: Interpolation = Field(default_factory=lambda: Interpolation(value=4))
     valid_images_extensions: Set[str] = Field(
         default_factory=lambda: frozenset({"jpg", "jpeg", "png", "webp"})
     )
     detector: SceneDetector = Field(
         default_factory=lambda: AdaptiveDetector(
-            adaptive_threshold=15.0,
-            min_scene_len=20,
-            window_width=8,
-            min_content_val=12,
-            luma_only=True,
+            adaptive_threshold=10.0,
+            min_scene_len=10,
+            window_width=6,
+            min_content_val=10,
+            luma_only=False,
             kernel_size=None,
         )
+        # default_factory=lambda: AdaptiveDetector(
+        #     adaptive_threshold=15.0,
+        #     min_scene_len=20,
+        #     window_width=8,
+        #     min_content_val=12,
+        #     luma_only=False,
+        #     kernel_size=None,
+        # )
+        # default_factory=lambda: AdaptiveDetector(
+        #     adaptive_threshold=10,
+        #     min_scene_len=10,
+        #     window_width=6,
+        #     min_content_val=10,
+        #     luma_only=True,
+        #     kernel_size=None,
+        # )
     )
     model_config: ConfigDict = {
         "arbitrary_types_allowed": True,
