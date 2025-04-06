@@ -67,7 +67,7 @@ class Yolo(BaseModel, ABC):
         pass
 
     @abstractmethod
-    def parse_raw_predictions_to_prediction_objects(
+    def parse_raw_predictions_from_client_to_prediction_objects(
         self,
         raw_predictions: list,
     ) -> List[PredictionBase]:
