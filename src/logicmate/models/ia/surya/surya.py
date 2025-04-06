@@ -1,6 +1,7 @@
 import logging
 import os
 from io import BytesIO
+import re
 from typing import Any, List, Literal, Tuple
 
 import cv2
@@ -33,6 +34,12 @@ class Surya(BaseModel):
     model_config: ConfigDict = {
         "arbitrary_types_allowed": True,
     }
+    ignore_classes: set[str] = Field(
+        default_factory=lambda: frozenset(
+            {"initial-node", "final-node", "normal-arrow", "code_bracket"}
+        ),
+        description="Valid classes for text detection.",
+    )
 
     def image_to_bytes(self, image: Image.Image, format: str = "PNG") -> bytes:
         buf = BytesIO()
@@ -97,6 +104,26 @@ class Surya(BaseModel):
         plt.title(label=text)
         plt.show()
 
+    def clean_class_name(self, raw: str) -> str:
+        match: re.Match[str] | None = re.match(
+            pattern=r"typing\.Literal\['(.+)'\]", string=raw
+        )
+        return match.group(1) if match else raw
+
+    def ignore_classes_for_ocr_prediction(
+        self,
+        class_name: str,
+    ) -> bool:
+        """
+        Validates if the class name is in the valid classes for OCR prediction.
+        Args:
+            class_name (str): The class name to validate.
+        Returns:
+            bool: True if the class name is valid, False otherwise.
+        """
+        should_validate: bool = class_name in self.ignore_classes
+        return should_validate
+
     def predict(
         self, image: ndarray, show_result: bool = False
     ) -> Tuple[str, List[float], float]:
@@ -133,6 +160,16 @@ class Surya(BaseModel):
                 for prediction in image.predictions:
                     if not prediction:
                         raise ValueError("Prediction is required")
+
+                    not_should_validate: bool = self.ignore_classes_for_ocr_prediction(
+                        class_name=self.clean_class_name(raw=str(prediction.class_name))
+                    )
+
+                    if not_should_validate:
+                        logging.info(
+                            msg=f"This class name: {prediction.class_name}. Already have text."
+                        )
+                        continue
 
                     logging.info(msg=f"Processing prediction: {prediction}")
                     cropped_image_from_prediction: ndarray = (
