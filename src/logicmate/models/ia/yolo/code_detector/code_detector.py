@@ -71,14 +71,14 @@ class CodeDetector(Yolo):
 
             match class_name:
                 case "code_snippet":
-                    prediction = CodeSnippet(
+                    prediction: CodeSnippet = CodeSnippet(
                         x=x_center,
                         y=y_center,
                         width=width,
                         height=height,
                     )
                 case "code_bracket":
-                    prediction = CodeBracket(
+                    prediction: CodeBracket = CodeBracket(
                         x=x_center,
                         y=y_center,
                         width=width,
@@ -91,7 +91,7 @@ class CodeDetector(Yolo):
 
         return formatted_predictions
 
-    def parse_raw_predictions_to_prediction_objects(
+    def parse_raw_predictions_from_client_to_prediction_objects(
         self,
         raw_predictions: list,
     ) -> List[CodePrediction]:
@@ -130,6 +130,30 @@ class CodeDetector(Yolo):
 
         return formatted_predictions
 
+    def filter_empty_scenes(self, video: Video) -> Video:
+        """
+        Filter empty scenes from the video.
+        Args:
+            video (Video): Video object to process.
+        Returns:
+            Video: Video object with empty scenes removed.
+        """
+        if not video:
+            raise ValueError("Video is required")
+        if not video.scenes:
+            raise ValueError("Scenes are required")
+
+        logging.info(msg="Filtering empty scenes...")
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} before filtering")
+        filtered_scenes: list = [
+            scene for scene in video.scenes if scene.images and len(scene.images) > 0
+        ]
+
+        video.scenes = filtered_scenes
+        logging.info(msg=f"Number of scenes: {len(video.scenes)} after filtering")
+        logging.info(msg="Empty scenes filtered.")
+        return video
+
     def predict(
         self, image_path: str, show_result: bool = False
     ) -> List[CodePrediction]:
@@ -143,11 +167,11 @@ class CodeDetector(Yolo):
             List[PredictionBase]: A list of predictions for the image.
         """
         ultralytics_results = self.model(image_path, conf=self.confidence)[0]
-        detections_results = Detections.from_ultralytics(
+        detections_results: Detections = Detections.from_ultralytics(
             ultralytics_results=ultralytics_results
         ).with_nms()
-        predictions: List[CodeSnippet | CodeBracket] = (
-            self.parse_detections_to_predictions(detections=detections_results)
+        predictions: List[CodePrediction] = self.parse_detections_to_predictions(
+            detections=detections_results
         )
 
         if show_result:
@@ -188,7 +212,7 @@ class CodeDetector(Yolo):
 
         raw_predictions: dict = results.get("predictions", [])
         predictions: List[CodePrediction] = (
-            self.parse_raw_predictions_to_prediction_objects(
+            self.parse_raw_predictions_from_client_to_prediction_objects(
                 raw_predictions=raw_predictions
             )
         )
@@ -251,5 +275,7 @@ class CodeDetector(Yolo):
         video = self.filter_images_from_scene_by_min_amount_of_predictions(
             video=video,
         )
+
+        video = self.filter_empty_scenes(video=video)
 
         return video
