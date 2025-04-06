@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import Field
 
@@ -47,3 +47,16 @@ class DrawIODecisionArrow(PredictionBase):
 
 class DrawIONormalArrow(PredictionBase):
     class_name: Literal["normal-arrow"] = Field(default=Literal["normal-arrow"])
+
+
+DrawioPrediction = Union[
+    DrawIOInitialNode,
+    DrawIOFinalNode,
+    DrawIOPrintNode,
+    DrawIOVariableNode,
+    DrawIOOperationNode,
+    DrawIODecisionNode,
+    DrawIOFunctionNode,
+    DrawIODecisionArrow,
+    DrawIONormalArrow,
+]
