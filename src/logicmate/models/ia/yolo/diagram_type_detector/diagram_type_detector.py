@@ -137,19 +137,14 @@ class DiagramTypeDetector(Yolo):
         formatted_predictions: list[PredictionBase] = []
 
         for prediction in raw_predictions:
-            x_min, y_min, x_max, y_max = prediction["bbox"]
-
-            width: float = x_max - x_min
-            height: float = y_max - y_min
-            x_center: float = x_min + width / 2
-            y_center: float = y_min + height / 2
-
+            if prediction["confidence"] < self.confidence:
+                continue
             prediction_object: PredictionBase = PredictionBase(
-                x=x_center,
-                y=y_center,
-                width=width,
-                height=height,
-                class_name=prediction["class_name"],
+                x=prediction["x"],
+                y=prediction["y"],
+                width=prediction["width"],
+                height=prediction["height"],
+                class_name=prediction["class"],
             )
 
             formatted_predictions.append(prediction_object)
@@ -215,6 +210,7 @@ class DiagramTypeDetector(Yolo):
             logging.error(msg="Video scenes are not set.")
             raise ValueError("Video scenes are not set.")
 
+        logging.info(msg="Predicting types of diagrams in video...")
         scene_categories: list = []
 
         for scene in video.scenes:
@@ -259,4 +255,5 @@ class DiagramTypeDetector(Yolo):
         video = self.filter_none_scene_category(video=video)
         video = self.filter_video_scenes_by_video_category(video=video)
         video = self.filter_images_by_scene_category(video=video)
+        logging.info(msg=f"Video diagram type detected: {video.categories}")
         return video
