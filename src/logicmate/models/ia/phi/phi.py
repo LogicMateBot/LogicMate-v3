@@ -1,11 +1,8 @@
-from typing import List
-
+from logicmate.models.predictions.predictions.prediction import PredictionBase
+from logicmate.models.video.video import ImageModel, Scene, Video
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 from transformers.pipelines.base import Pipeline
-
-from logicmate.models.predictions.predictions.prediction import PredictionBase
-from logicmate.models.video.video import ImageModel, Scene, Video
 
 
 class Phi(BaseModel):
@@ -230,7 +227,7 @@ class Phi(BaseModel):
 
         return explanation
 
-    def generate_explanation(self, video: Video) -> str:
+    def generate_explanation(self, video: Video) -> Video:
         """
         Generate a video explanation using the Phi model.
 
