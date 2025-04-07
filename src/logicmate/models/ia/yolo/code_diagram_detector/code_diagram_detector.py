@@ -236,6 +236,7 @@ class CodeDiagramDetector(Yolo):
     def predict_from_video(
         self, video: Video, use_client: bool = False, show_result: bool = False
     ) -> Video:
+        logging.info(msg="Predicting video categories...")
         # This should remain outside because later we will determine the main video category
         scene_categories: list = []
 
@@ -279,4 +280,5 @@ class CodeDiagramDetector(Yolo):
         video = self.filter_none_scene_category(video=video)
         video = self.filter_video_scenes_by_video_category(video=video)
         video = self.filter_images_by_scene_category(video=video)
+        logging.info(msg=f"Video categories predicted: {video.categories}")
         return video
