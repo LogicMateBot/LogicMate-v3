@@ -10,7 +10,10 @@ from logicmate.models.video.video import Video
 
 
 class Dino(BaseModel):
-    model_name: str
+    model_name: str = Field(
+        default="facebook/dinov2-base",
+        description="The name of the model.",
+    )
     processor: AutoImageProcessor = Field(
         default=None,
         description="Processor for the model.",
