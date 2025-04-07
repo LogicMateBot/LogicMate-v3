@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from surya.detection import DetectionPredictor
 from surya.recognition import OCRResult, RecognitionPredictor
 
-import logicmate.models.video.video as Video
+from logicmate.models.video.video import Video
 from logicmate.models.predictions.predictions.prediction import PredictionBase
 
 
@@ -145,7 +145,7 @@ class Surya(BaseModel):
 
         return extracted_text, bounding_boxes, confidence
 
-    def predict_video(self, video: Video) -> Tuple[str, List[float], float]:
+    def predict_video(self, video: Video) -> Video:
         if not video:
             raise ValueError("Video is required")
         if not video.scenes:
