@@ -248,6 +248,7 @@ class CodeDetector(Yolo):
         Returns:
             Video: The processed video with predictions.
         """
+        logging.info(msg="Predicting code snippets from video...")
         for scene in video.scenes:
             for image in scene.images:
                 if use_client:
@@ -277,5 +278,5 @@ class CodeDetector(Yolo):
         )
 
         video = self.filter_empty_scenes(video=video)
-
+        logging.info(msg="Code snippets predicted.")
         return video
