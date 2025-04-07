@@ -27,7 +27,7 @@ class FlowgorithmDetector(Yolo):
     """
 
     model_weight: str = "weights-v1/drawio-diagram-detection-model/weights/best.pt"
-    model_id: str = "drawio-diagram-detection/6"
+    model_id: str = "flowgorithm-videoclass-detection/3"
     min_amount_of_predictions: int = 2
     valid_classes: set[str] = Field(
         default_factory=lambda: frozenset(
