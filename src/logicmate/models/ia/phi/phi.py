@@ -245,7 +245,7 @@ class Phi(BaseModel):
                         prediction=prediction
                     )
                 image.explanation = self.generate_image_explanation(image=image)
-            scene.explanation = self.generate_scene_explanation(images=scene.images)
+            scene.explanation = self.generate_scene_explanation(scene=scene)
         video.explanation = self.generate_video_explanation(video=video)
 
         return video
