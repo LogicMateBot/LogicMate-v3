@@ -27,7 +27,7 @@ class DrawioDetector(Yolo):
     """
 
     model_weight: str = "weights-v1/drawio-diagram-detection-model/weights/best.pt"
-    model_id: str = "drawio-diagram-detection/6"
+    model_id: str = "drawio-videoclass-detection/6"
     min_amount_of_predictions: int = 2
     valid_classes: set[str] = Field(
         default_factory=lambda: frozenset(
@@ -211,6 +211,13 @@ class DrawioDetector(Yolo):
                 continue
 
             match prediction["class"]:
+                case "inital-node":
+                    prediction = DrawIOInitialNode(
+                        x=prediction["x"],
+                        y=prediction["y"],
+                        width=prediction["width"],
+                        height=prediction["height"],
+                    )
                 case "initial-node":
                     prediction = DrawIOInitialNode(
                         x=prediction["x"],
@@ -225,8 +232,22 @@ class DrawioDetector(Yolo):
                         width=prediction["width"],
                         height=prediction["height"],
                     )
+                case "variable-declaration":
+                    prediction = DrawIOVariableNode(
+                        x=prediction["x"],
+                        y=prediction["y"],
+                        width=prediction["width"],
+                        height=prediction["height"],
+                    )
                 case "operation-node":
                     prediction = DrawIOOperationNode(
+                        x=prediction["x"],
+                        y=prediction["y"],
+                        width=prediction["width"],
+                        height=prediction["height"],
+                    )
+                case "desicion-node":
+                    prediction = DrawIODecisionNode(
                         x=prediction["x"],
                         y=prediction["y"],
                         width=prediction["width"],
@@ -255,6 +276,13 @@ class DrawioDetector(Yolo):
                     )
                 case "final-node":
                     prediction = DrawIOFinalNode(
+                        x=prediction["x"],
+                        y=prediction["y"],
+                        width=prediction["width"],
+                        height=prediction["height"],
+                    )
+                case "desicion-arrow":
+                    prediction = DrawIODecisionArrow(
                         x=prediction["x"],
                         y=prediction["y"],
                         width=prediction["width"],
@@ -398,6 +426,7 @@ class DrawioDetector(Yolo):
         Returns:
             Video: The processed video with predictions.
         """
+        logging.info(msg="Predicting drawio diagrams...")
         for scene in video.scenes:
             for image in scene.images:
                 if use_client:
@@ -427,5 +456,6 @@ class DrawioDetector(Yolo):
         )
 
         video = self.filter_empty_scenes(video=video)
+        logging.info(msg="Drawio diagrams predicted.")
 
         return video
