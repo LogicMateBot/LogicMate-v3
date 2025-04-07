@@ -60,11 +60,11 @@ def predict_diagram_classification(
         video=video, use_client=use_client, show_result=show_result
     )
 
-    if "drawio" in video.categories:
+    if video.categories and "drawio" in video.categories:
         video = predict_drawio_diagram(
             video=video, client=client, use_client=use_client, show_result=show_result
         )
-    if "flowgorithm" in video.categories:
+    if video.categories and "flowgorithm" in video.categories:
         video = predict_flowgorithm_diagram(
             video=video, client=client, use_client=use_client, show_result=show_result
         )
@@ -98,6 +98,8 @@ def predict_drawio_diagram(
 def predict_flowgorithm_diagram(
     video: Video,
     client: InferenceHTTPClient,
+    use_client: bool = False,
+    show_result: bool = False,
 ) -> Video:
     """
     Predicts the flowgorithm diagram classification for a given video.
@@ -109,7 +111,11 @@ def predict_flowgorithm_diagram(
     Returns:
         Video: The processed video with predictions.
     """
-    pass
+    flowgorithmDetector: CodeDiagramDetector = CodeDiagramDetector(client=client)
+    video = flowgorithmDetector.predict_from_video(
+        video=video, use_client=use_client, show_result=show_result
+    )
+    return video
 
 
 def predict_code_snippet(
@@ -198,17 +204,20 @@ def explain_video(
     match model_to_use:
         case "phi":
             phi: Phi = Phi()
-            video = phi.generate_video_explanation(video=video)
+            video = phi.generate_explanation(video=video)
         case "openai":
+            if not openai_api_key:
+                raise ValueError("OpenAI API key is not set.")
+
             openai: OpenAIModel = OpenAIModel(api_key=openai_api_key)
-            video = openai.generate_video_explanation(video=video)
+            video = openai.generate_explanation(video=video)
         case _:
             raise ValueError(f"Unknown model: {model_to_use}")
     return video
 
 
-def start_bot(video: str, config: dict[str, str]) -> None:
-    if not video:
+def start_bot(video_path: str, config: dict[str, str]) -> None:
+    if not video_path:
         raise ValueError("Path to file is required.")
 
     roboflow_api_key: str = config.get(EnvVariable.ROBOFLOW_API_KEY.value)
@@ -224,9 +233,9 @@ def start_bot(video: str, config: dict[str, str]) -> None:
     scene_detector: PySceneDetect = PySceneDetect()
     codeDiagramDetector: CodeDiagramDetector = CodeDiagramDetector(client=CLIENT)
 
-    file_exist, file_path, file_name = FileUtil.file_exists(path=video)
+    file_exist, file_path, file_name = FileUtil.file_exists(path=video_path)
     if not file_exist:
-        raise FileNotFoundError(f"File not found: {video}")
+        raise FileNotFoundError(f"File not found: {video_path}")
 
     output_dir: str = DirectoryUtil.ensure_directory(
         path=f"media/images/{file_name}/scenes"
@@ -236,17 +245,12 @@ def start_bot(video: str, config: dict[str, str]) -> None:
         video_path=file_path, output_dir=output_dir
     )
 
-    if not video:
-        raise ValueError("Video is None. Please check the video processing.")
-
     video = codeDiagramDetector.predict_from_video(
         video=video,
-        use_client=True,
+        use_client=False,
         show_result=False,
     )
 
-    if not video:
-        raise ValueError("Video is None. Please check the video processing.")
     if not video.categories:
         raise ValueError(
             "Video categories are None. Please check the video processing."
@@ -262,21 +266,13 @@ def start_bot(video: str, config: dict[str, str]) -> None:
     video = predict_by_video_categories(
         video=video,
         client=CLIENT,
-        use_client=True,
+        use_client=False,
         show_result=False,
     )
-    if not video:
-        raise ValueError("Video is None. Please check the video processing.")
-
     video = extract_video_text(video=video)
 
-    if not video:
-        raise ValueError("Video is None. Please check the video processing.")
-
     video = explain_video(
-        video=video, model_to_use="openai", openai_api_key=openai_api_key
+        video=video, model_to_use="phi", openai_api_key=openai_api_key
     )
-    if not video:
-        raise ValueError("Video is None. Please check the video processing.")
 
     logging.info(msg="Bot finished processing.")
