@@ -203,7 +203,7 @@ class OpenAIModel(BaseModel):
 
         return explanation
 
-    def generate_explanation(self, video: Video) -> str:
+    def generate_explanation(self, video: Video) -> Video:
         """
         Generate a video explanation using the Phi model.
 
