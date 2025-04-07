@@ -1,9 +1,10 @@
 import logging
-import os
 
 from inference_sdk import InferenceHTTPClient
 
 from logicmate.models.ia.dino.dino import Dino
+from logicmate.models.ia.openai.openai import OpenAIModel
+from logicmate.models.ia.phi.phi import Phi
 from logicmate.models.ia.pyscenedetect.psycenedetect import PySceneDetect
 from logicmate.models.ia.surya.surya import Surya
 from logicmate.models.ia.yolo.code_detector.code_detector import CodeDetector
@@ -16,6 +17,7 @@ from logicmate.models.ia.yolo.diagram_type_detector.diagram_type_detector import
 from logicmate.models.ia.yolo.drawio_detector.drawio_detector import DrawioDetector
 from logicmate.models.video.video import Video
 from logicmate.utils.directory.directory import DirectoryUtil
+from logicmate.utils.env.env import EnvVariable
 from logicmate.utils.file.file import FileUtil
 
 
@@ -40,6 +42,8 @@ def remove_similar_images(
 def predict_diagram_classification(
     video: Video,
     client: InferenceHTTPClient,
+    use_client: bool = False,
+    show_result: bool = False,
 ) -> Video:
     """
     Predicts the diagram classification for a given video.
@@ -53,13 +57,17 @@ def predict_diagram_classification(
     """
     diagramTypeDetector: DiagramTypeDetector = DiagramTypeDetector(client=client)
     video = diagramTypeDetector.predict_from_video(
-        video=video, use_client=False, show_result=False
+        video=video, use_client=use_client, show_result=show_result
     )
 
     if "drawio" in video.categories:
-        video = predict_drawio_diagram(video=video, client=client)
+        video = predict_drawio_diagram(
+            video=video, client=client, use_client=use_client, show_result=show_result
+        )
     if "flowgorithm" in video.categories:
-        video = predict_flowgorithm_diagram(video=video, client=client)
+        video = predict_flowgorithm_diagram(
+            video=video, client=client, use_client=use_client, show_result=show_result
+        )
 
     return video
 
@@ -67,6 +75,8 @@ def predict_diagram_classification(
 def predict_drawio_diagram(
     video: Video,
     client: InferenceHTTPClient,
+    use_client: bool = False,
+    show_result: bool = False,
 ) -> Video:
     """
     Predicts the drawio diagram classification for a given video.
@@ -80,7 +90,7 @@ def predict_drawio_diagram(
     """
     drawioDetector: DrawioDetector = DrawioDetector(client=client)
     video = drawioDetector.predict_from_video(
-        video=video, use_client=False, show_result=False
+        video=video, use_client=use_client, show_result=show_result
     )
     return video
 
@@ -105,6 +115,8 @@ def predict_flowgorithm_diagram(
 def predict_code_snippet(
     video: Video,
     client: InferenceHTTPClient,
+    use_client: bool = False,
+    show_result: bool = False,
 ) -> Video:
     """
     Predicts the code snippet classification for a given video.
@@ -118,7 +130,7 @@ def predict_code_snippet(
     """
     code_detector: CodeDetector = CodeDetector(client=client)
     video = code_detector.predict_from_video(
-        video=video, use_client=False, show_result=False
+        video=video, use_client=use_client, show_result=show_result
     )
     return video
 
@@ -144,28 +156,66 @@ def extract_video_text(
 def predict_by_video_categories(
     video: Video,
     client: InferenceHTTPClient,
+    use_client: bool = False,
+    show_result: bool = False,
 ) -> Video:
     match video.categories:
         case ["code"]:
-            video = predict_code_snippet(video=video, client=client)
+            video = predict_code_snippet(
+                video=video,
+                client=client,
+                use_client=use_client,
+                show_result=show_result,
+            )
         case ["diagram"]:
-            video = predict_diagram_classification(video=video, client=client)
+            video = predict_diagram_classification(
+                video=video,
+                client=client,
+                use_client=use_client,
+                show_result=show_result,
+            )
         case _:
             raise ValueError(f"Unknown category: {video.categories}")
     return video
 
 
-def start_bot(path_to_file: str) -> None:
-    if not path_to_file:
+def explain_video(
+    video: Video,
+    model_to_use: str,
+    openai_api_key: str | None = None,
+) -> Video:
+    """
+    Explains the video using the Phi model.
+
+    Args:
+        video (Video): The video object to be processed.
+
+
+    Returns:
+        Video: The processed video with explanations.
+    """
+
+    match model_to_use:
+        case "phi":
+            phi: Phi = Phi()
+            video = phi.generate_video_explanation(video=video)
+        case "openai":
+            openai: OpenAIModel = OpenAIModel(api_key=openai_api_key)
+            video = openai.generate_video_explanation(video=video)
+        case _:
+            raise ValueError(f"Unknown model: {model_to_use}")
+    return video
+
+
+def start_bot(video: str, config: dict[str, str]) -> None:
+    if not video:
         raise ValueError("Path to file is required.")
 
-    API_KEY: str | None = os.getenv(key="API_KEY")
-    if not API_KEY:
-        raise ValueError("API_KEY environment variable is not set.")
-    API_URL: str | None = os.getenv(key="API_URL")
-    if not API_URL:
-        raise ValueError("API_URL environment variable is not set.")
-    CLIENT = InferenceHTTPClient(api_url=API_URL, api_key=API_KEY)
+    roboflow_api_key: str = config.get(EnvVariable.ROBOFLOW_API_KEY.value)
+    roboflow_api_url: str = config.get(EnvVariable.ROBOFLOW_API_URL.value)
+    openai_api_key: str = config.get(EnvVariable.OPENAI_API_KEY.value)
+
+    CLIENT = InferenceHTTPClient(api_url=roboflow_api_url, api_key=roboflow_api_key)
     if not CLIENT:
         raise ValueError("Inference client is not initialized.")
 
@@ -174,9 +224,9 @@ def start_bot(path_to_file: str) -> None:
     scene_detector: PySceneDetect = PySceneDetect()
     codeDiagramDetector: CodeDiagramDetector = CodeDiagramDetector(client=CLIENT)
 
-    file_exist, file_path, file_name = FileUtil.file_exists(path=path_to_file)
+    file_exist, file_path, file_name = FileUtil.file_exists(path=video)
     if not file_exist:
-        raise FileNotFoundError(f"File not found: {path_to_file}")
+        raise FileNotFoundError(f"File not found: {video}")
 
     output_dir: str = DirectoryUtil.ensure_directory(
         path=f"media/images/{file_name}/scenes"
@@ -191,7 +241,8 @@ def start_bot(path_to_file: str) -> None:
 
     video = codeDiagramDetector.predict_from_video(
         video=video,
-        use_client=False,
+        use_client=True,
+        show_result=False,
     )
 
     if not video:
@@ -211,10 +262,21 @@ def start_bot(path_to_file: str) -> None:
     video = predict_by_video_categories(
         video=video,
         client=CLIENT,
+        use_client=True,
+        show_result=False,
     )
-
     if not video:
         raise ValueError("Video is None. Please check the video processing.")
 
     video = extract_video_text(video=video)
+
+    if not video:
+        raise ValueError("Video is None. Please check the video processing.")
+
+    video = explain_video(
+        video=video, model_to_use="openai", openai_api_key=openai_api_key
+    )
+    if not video:
+        raise ValueError("Video is None. Please check the video processing.")
+
     logging.info(msg="Bot finished processing.")

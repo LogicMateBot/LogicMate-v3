@@ -1,12 +1,15 @@
 from logicmate.bot.controller import start_bot
+from logicmate.utils.env.env import get_required_env_variables, load_env_variables
 from logicmate.utils.logger.logger import setup_logging
 
 
-def main(path_to_file: str) -> None:
+def main(video: str) -> None:
     setup_logging()
-    start_bot(path_to_file=path_to_file)
+    load_env_variables(env_path=".env")
+    config: dict[str, str] = get_required_env_variables()
+    start_bot(video=video, config=config)
 
 
 if __name__ == "__main__":
-    path_to_file = "media/videos/21a10a54-4ac2-4eb8-8807-dcfbaab749ca.mp4"
-    main(path_to_file=path_to_file)
+    video_path = "media/videos/21a10a54-4ac2-4eb8-8807-dcfbaab749ca.mp4"
+    main(video=video_path)
