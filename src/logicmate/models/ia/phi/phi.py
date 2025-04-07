@@ -10,7 +10,7 @@ class Phi(BaseModel):
     Class for the Phi model, a large language model (LLM) based on the LLaMA architecture.
     """
 
-    model_name: str = Field(default=None, description="The name of the model.")
+    model_name: str
     model: AutoModelForCausalLM = Field(default=None, description="The model instance.")
     tokenizer: AutoTokenizer = Field(
         default=None, description="The tokenizer instance."
@@ -41,6 +41,7 @@ class Phi(BaseModel):
                 device_map="auto",
                 torch_dtype="auto",
                 trust_remote_code=True,
+                offload_folder="offload",
             )
             self.tokenizer = AutoTokenizer.from_pretrained(
                 pretrained_model_name_or_path=self.model_name
@@ -80,13 +81,7 @@ class Phi(BaseModel):
             },
         ]
 
-        pipe: Pipeline = pipeline(
-            task="text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-        )
-
-        explanation: str = pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
             "generated_text"
         ]
 
@@ -125,13 +120,7 @@ class Phi(BaseModel):
             },
         ]
 
-        pipe: Pipeline = pipeline(
-            task="text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-        )
-
-        explanation: str = pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
             "generated_text"
         ]
 
@@ -170,13 +159,7 @@ class Phi(BaseModel):
             },
         ]
 
-        pipe: Pipeline = pipeline(
-            task="text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-        )
-
-        explanation: str = pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
             "generated_text"
         ]
 
@@ -216,12 +199,7 @@ class Phi(BaseModel):
             },
         ]
 
-        pipe: Pipeline = pipeline(
-            task="text-generation",
-            model=self.model,
-            tokenizer=self.tokenizer,
-        )
-        explanation: str = pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
             "generated_text"
         ]
 

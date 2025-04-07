@@ -203,7 +203,7 @@ def explain_video(
 
     match model_to_use:
         case "phi":
-            phi: Phi = Phi()
+            phi: Phi = Phi(model_name="microsoft/Phi-4-mini-instruct")
             video = phi.generate_explanation(video=video)
         case "openai":
             if not openai_api_key:
