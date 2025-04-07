@@ -12,6 +12,9 @@ class ImageModel(BaseModel):
     categories: Optional[List[str]] = Field(
         default=None, description="Category of the image"
     )
+    explanation: Optional[str] = Field(
+        default=None, description="Explanation of the image"
+    )
     predictions: Optional[List[PredictionBase]] = Field(
         default=None, description="List of predictions associated with the image"
     )
@@ -25,6 +28,9 @@ class Scene(BaseModel):
         default=None, description="Category of the scene"
     )
     images: List[ImageModel]
+    explanation: Optional[str] = Field(
+        default=None, description="Explanation of the scene"
+    )
 
 
 class Video(BaseModel):
@@ -34,6 +40,9 @@ class Video(BaseModel):
         default=None, description="List of categories associated with the video"
     )
     scenes: List[Scene]
+    explanation: Optional[str] = Field(
+        default=None, description="Explanation of the video"
+    )
 
     @classmethod
     def create_from_video_scenes(
