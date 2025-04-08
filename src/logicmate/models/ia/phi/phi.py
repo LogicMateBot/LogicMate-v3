@@ -1,3 +1,6 @@
+import logging
+import re
+
 from logicmate.models.predictions.predictions.prediction import PredictionBase
 from logicmate.models.video.video import ImageModel, Scene, Video
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -20,10 +23,15 @@ class Phi(BaseModel):
         default={
             "max_new_tokens": 2048,
             "return_full_text": False,
-            "temperature": 0.0,
             "do_sample": False,
         },
         description="Generation arguments for the model.",
+    )
+    ignore_classes: set[str] = Field(
+        default_factory=lambda: frozenset(
+            {"initial-node", "final-node", "normal-arrow", "code_bracket"}
+        ),
+        description="Valid classes for text detection.",
     )
 
     model_config: ConfigDict = {
@@ -52,6 +60,11 @@ class Phi(BaseModel):
                 tokenizer=self.tokenizer,
             )
         return self
+    
+    def normalize_messages(messages) -> str:
+        if isinstance(messages, (list, tuple)):
+            return "\n".join(str(m) for m in messages)
+        return str(messages)
 
     def generate_prediction_explanation(self, prediction: PredictionBase) -> str:
         """
@@ -61,6 +74,9 @@ class Phi(BaseModel):
         Returns:
             str: The generated explanation.
         """
+        logging.info(
+            msg=f"Generating explanation for prediction: {prediction.class_name} - {prediction.text}"
+        )
 
         messages: list = [
             {
@@ -81,9 +97,14 @@ class Phi(BaseModel):
             },
         ]
 
-        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(messages, **self.generation_args)[0][
             "generated_text"
         ]
+
+        logging.info(
+            msg=f"Generated explanation for prediction: {prediction.class_name} - {prediction.text}"
+        )
+        logging.info(msg=f"Explanation: {explanation}")
 
         return explanation
 
@@ -103,6 +124,11 @@ class Phi(BaseModel):
                 for prediction in image.predictions
             ]
         )
+
+        logging.info(
+            msg=f"Generating explanation for image: {image.path} with content: {combined_content}"
+        )
+
         messages: list = [
             {
                 "role": "developer",
@@ -120,9 +146,14 @@ class Phi(BaseModel):
             },
         ]
 
-        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(messages, **self.generation_args)[0][
             "generated_text"
         ]
+
+        logging.info(
+            msg=f"Generated explanation for image: {image.path} with content: {combined_content}"
+        )
+        logging.info(msg=f"Explanation: {explanation}")
 
         return explanation
 
@@ -143,6 +174,10 @@ class Phi(BaseModel):
             ]
         )
 
+        logging.info(
+            msg=f"Generating explanation for scene: {scene.scene_id} with explanations: {combined_explanations}"
+        )
+
         messages: list = [
             {
                 "role": "developer",
@@ -159,9 +194,14 @@ class Phi(BaseModel):
             },
         ]
 
-        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(messages, **self.generation_args)[0][
             "generated_text"
         ]
+
+        logging.info(
+            msg=f"Generated explanation for scene: {scene.scene_id} with explanations: {combined_explanations}"
+        )
+        logging.info(msg=f"Explanation: {explanation}")
 
         return explanation
 
@@ -182,15 +222,19 @@ class Phi(BaseModel):
             ]
         )
 
+        logging.info(
+            msg=f"Generating explanation for video: {video.id} with explanations: {combined_explanations}"
+        )
+
         messages: list = [
             {
                 "role": "developer",
                 "content": (
                     "Based on the following set of explanations extracted from multiple scenes, clearly identify the overall purpose of the video. "
                     "Precisely explain what process, operation, or logic the entire video is representing or illustrating. "
-                    "Highlight key relationships or connections between the individual scene explanations. ",
-                    "Set a title for the video, it should be short and concise and represent the content of the video. ",
-                    "The response must be concise, accurate, without additional comments, and entirely in Spanish.",
+                    "Highlight key relationships or connections between the individual scene explanations. "
+                    "Set a title for the video, it should be short and concise and represent the content of the video. "
+                    "The response must be concise, accurate, without additional comments, and entirely in Spanish."
                 ),
             },
             {
@@ -199,11 +243,37 @@ class Phi(BaseModel):
             },
         ]
 
-        explanation: str = self.pipe(inputs=messages, **self.generation_args)[0][
+        explanation: str = self.pipe(messages, **self.generation_args)[0][
             "generated_text"
         ]
 
+        logging.info(
+            msg=f"Generated explanation for video: {video.id} with explanations: {combined_explanations}"
+        )
+        logging.info(msg=f"Explanation: {explanation}")
+
         return explanation
+
+    def clean_class_name(self, raw: str) -> str:
+        raw = str(raw)
+        match: re.Match[str] | None = re.match(
+            pattern=r"typing\.Literal\['(.+)'\]", string=raw
+        )
+        return match.group(1) if match else raw
+
+    def ignore_classes_for_explanation(
+        self,
+        class_name: str,
+    ) -> bool:
+        """
+        Validates if the class name is in the valid classes for OCR prediction.
+        Args:
+            class_name (str): The class name to validate.
+        Returns:
+            bool: True if the class name is valid, False otherwise.
+        """
+        should_validate: bool = class_name in self.ignore_classes
+        return should_validate
 
     def generate_explanation(self, video: Video) -> Video:
         """
@@ -215,10 +285,21 @@ class Phi(BaseModel):
         Returns:
             str: The generated explanation.
         """
+        logging.info(msg=f"Generating explanation for video: {video.id}")
 
         for scene in video.scenes:
             for image in scene.images:
+                if not image.predictions:
+                    continue
                 for prediction in image.predictions:
+                    if not prediction.class_name:
+                        raise ValueError("Prediction class name is required")
+
+                    if not self.ignore_classes_for_explanation(
+                        class_name=self.clean_class_name(raw=prediction.class_name)
+                    ):
+                        continue
+
                     prediction.explanation = self.generate_prediction_explanation(
                         prediction=prediction
                     )
@@ -226,4 +307,5 @@ class Phi(BaseModel):
             scene.explanation = self.generate_scene_explanation(scene=scene)
         video.explanation = self.generate_video_explanation(video=video)
 
+        logging.info(msg=f"Generated explanation for video: {video.id}")
         return video
