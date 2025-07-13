@@ -29,16 +29,13 @@ def load_env_variables(env_path: str | None = None) -> None:
 class EnvVariable(Enum):
     """
     Enum class for environment variables.
-
-    Attributes:
-        ROBOFLOW_API_KEY (str): The API key for Roboflow.
-        ROBOFLOW_API_URL (str): The API URL for Roboflow.
-        OPENAI_API_KEY (str): The API key for OpenAI.
     """
 
     ROBOFLOW_API_KEY: str = "ROBOFLOW_API_KEY"
     ROBOFLOW_API_URL: str = "ROBOFLOW_API_URL"
     OPENAI_API_KEY: str = "OPENAI_API_KEY"
+    CELERY_BROKER_URL: str = "CELERY_BROKER_URL"
+    CELERY_RESULT_BACKEND: str = "CELERY_RESULT_BACKEND"
 
 
 def get_required_env_variables() -> dict[str, str]:
@@ -59,6 +56,12 @@ def get_required_env_variables() -> dict[str, str]:
         ),
         EnvVariable.OPENAI_API_KEY.value: os.getenv(
             key=EnvVariable.OPENAI_API_KEY.value
+        ),
+        EnvVariable.CELERY_BROKER_URL.value: os.getenv(
+            key=EnvVariable.CELERY_BROKER_URL.value
+        ),
+        EnvVariable.CELERY_RESULT_BACKEND.value: os.getenv(
+            key=EnvVariable.CELERY_RESULT_BACKEND.value
         ),
     }
     return env_vars
