@@ -143,6 +143,8 @@ def predict_code_snippet(
 
 def extract_video_text(
     video: Video,
+    show_result: bool = False,
+    show_text: bool = False,
 ) -> Video:
     """
     Extracts text from the video.
@@ -154,7 +156,9 @@ def extract_video_text(
         Video: The processed video with extracted text.
     """
     surya = Surya()
-    video = surya.predict_video(video=video)
+    video = surya.predict_video(
+        video=video, show_result=show_result, show_text=show_text
+    )
 
     return video
 
@@ -164,7 +168,7 @@ def predict_by_video_categories(
     client: InferenceHTTPClient,
     use_client: bool = False,
     show_result: bool = False,
-) -> Video:
+) -> Video | None:
     match video.categories:
         case ["code"]:
             video = predict_code_snippet(
@@ -181,7 +185,10 @@ def predict_by_video_categories(
                 show_result=show_result,
             )
         case _:
-            raise ValueError(f"Unknown category: {video.categories}")
+            logging.warning(
+                msg=f"Unknown video categories: {video.categories}. Skipping prediction."
+            )
+            return None
     return video
 
 
@@ -216,7 +223,7 @@ def explain_video(
     return video
 
 
-def start_bot(video_path: str, config: dict[str, str]) -> None:
+def start_bot(video_path: str, config: dict[str, str]) -> Video | None:
     if not video_path:
         raise ValueError("Path to file is required.")
 
@@ -248,31 +255,46 @@ def start_bot(video_path: str, config: dict[str, str]) -> None:
     video = codeDiagramDetector.predict_from_video(
         video=video,
         use_client=False,
-        show_result=False,
+        show_result=True,
     )
 
     if not video.categories:
-        raise ValueError(
-            "Video categories are None. Please check the video processing."
+        logging.warning(
+            msg="No categories found in the video. Skipping further processing."
         )
+        return None
+
     if not video.scenes:
-        raise ValueError("Video scenes are None. Please check the video processing.")
+        logging.warning(
+            msg="No scenes found in the video. Skipping further processing."
+        )
+        return None
 
     video = remove_similar_images(video=video)
 
     if not video:
         raise ValueError("Video is None. Please check the video processing.")
 
-    video = predict_by_video_categories(
+    result: Video | None = predict_by_video_categories(
         video=video,
         client=CLIENT,
         use_client=False,
-        show_result=False,
+        show_result=True,
     )
-    video = extract_video_text(video=video)
+    if result is None:
+        logging.warning(
+            msg="No predictions made for the video categories. Skipping further processing."
+        )
+        return None
+
+    video = result
+
+    video = extract_video_text(video=video, show_result=True, show_text=True)
 
     video = explain_video(
-        video=video, model_to_use="phi", openai_api_key=openai_api_key
+        video=video, model_to_use="openai", openai_api_key=openai_api_key
     )
 
     logging.info(msg="Bot finished processing.")
+
+    return video
