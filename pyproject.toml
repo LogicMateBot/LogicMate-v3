@@ -1,14 +1,14 @@
 [project]
 name = "logicmate-v3"
 version = "3.0.0"
-description = "Interactive Assistance Bot on Algorithm Programs and Programming Diagrams for the course “Introduction to Algorithmics”"
+description = "Interactive Assistance Bot on Algorithm Programs and Programming Flowcharts for the course “Introduction to Algorithm's”"
 authors = [
     { name = "Vladimir Curiel", email = "voco0001@ce.pucmm.edu.do" },
     { name = "Natasha López", email = "nmlc0001@ce.pucmm.edu.do" },
 ]
 license = { text = "EULA: Evaluation and Non-Commercial Use License" }
 readme = "README.md"
-requires-python = "==3.10.16"
+requires-python = "==3.10.18"
 dependencies = [
     "pydantic (==2.11.1)",
     "torch (==2.6.0)",
@@ -21,7 +21,12 @@ dependencies = [
     "transformers (==4.51.0)",
     "openai (==1.70.0)",
     "accelerate (==1.6.0)",
-    "python-dotenv (>=1.1.0,<2.0.0)",
+    "python-dotenv (==1.1.0)",
+    "streamlit (==1.44.1)",
+    "watchdog (==6.0.0)",
+    "celery (>=5.5.3,<6.0.0)",
+    "redis (>=6.2.0,<7.0.0)",
+    "ruff (>=0.12.3,<0.13.0)",
 ]
 
 [build-system]
