@@ -4,7 +4,7 @@
 
 This project asumes that your already have installed the following:
 
-- Python 3.10.16
+- Python 3.10.18
 
 And you also have `CUDA` and `cuDNN` installed in your system if you want to use GPU.
 
