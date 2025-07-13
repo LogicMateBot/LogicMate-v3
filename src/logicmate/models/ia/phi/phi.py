@@ -60,7 +60,7 @@ class Phi(BaseModel):
                 tokenizer=self.tokenizer,
             )
         return self
-    
+
     def normalize_messages(messages) -> str:
         if isinstance(messages, (list, tuple)):
             return "\n".join(str(m) for m in messages)
