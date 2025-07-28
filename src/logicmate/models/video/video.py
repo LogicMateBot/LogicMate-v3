@@ -86,6 +86,7 @@ class Video(BaseModel):
     )
     scenes: List[Scene]
     title: Optional[str] = Field(default=None, description="Title of the video")
+    src: Optional[str] = Field(default=None, description="Source URL of the video")
     explanation: Optional[str] = Field(
         default=None, description="Explanation of the video"
     )
@@ -117,9 +118,10 @@ class Video(BaseModel):
             Video: An instance of the Video class.
         """
 
+        # This must be the desired amount + 1, as we start counting from 1
         images_per_scene = 4
 
-        id: bytes | str = video.name
+        id: str = str(uuid4())
         duration = str(object=video.duration)
         scenes_list: list = []
 
