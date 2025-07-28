@@ -1,3 +1,4 @@
+from typing import List
 from openai import OpenAI, api_key
 from pydantic import BaseModel, Field, model_validator
 
@@ -288,28 +289,24 @@ class OpenAIModel(BaseModel):
                 "You are analyzing a video composed of scenes that include both C code and flow diagrams. "
                 "Each scene has an explanation. Based on all these, generate a concise summary in Spanish of what the video as a whole represents. "
                 "Describe the overall logic or process being explained and how the code and diagrams work together. "
-                "Then, generate a short and accurate Spanish title that reflects the main content of the video. "
                 "Do not repeat the scene explanations. Do not add extra commentary or formatting."
             )
         elif "code" in categories:
             role_prompt = (
                 "You are analyzing a video composed of scenes that show C code explanations. "
                 "Based on all scene explanations, summarize in Spanish the complete program, algorithm, or logic being presented. "
-                "Then, generate a short and meaningful Spanish title for the video that captures the content accurately. "
                 "Avoid repeating the scene explanations and do not include additional comments."
             )
         elif "diagram" in categories:
             role_prompt = (
                 "You are analyzing a video composed of scenes that contain flowchart diagrams. "
                 "Using the explanations from each scene, summarize the full process or logic illustrated across the video. "
-                "Then, create a short Spanish title that best represents the diagrammed logic. "
                 "Keep the answer concise, do not include comments or repeat scene-level details."
             )
         else:
             role_prompt = (
                 "You are analyzing a video composed of various scenes, each with its own explanation. "
                 "Your task is to generate a concise summary in Spanish describing what the video overall represents or explains. "
-                "Then, provide a short Spanish title that captures the essence of the video's content. "
                 "Avoid extra comments or redundant explanations."
             )
 
@@ -329,6 +326,36 @@ class OpenAIModel(BaseModel):
         explanation = output.choices[0].message.content.strip()
         video.explanation = explanation
         return explanation
+
+    def generate_video_title(self, explanation: str) -> str:
+        """
+        Generate a short English title for the video based on its explanation.
+
+        Args:
+            explanation (str): The explanation text of the video.
+
+        Returns:
+            str: A concise, English-language title for the video.
+        """
+        if not explanation:
+            raise ValueError("Explanation is required to generate a title.")
+
+        prompt: str = (
+            "You are a helpful assistant that summarizes educational video explanations into short, descriptive titles. "
+            "Based on the following explanation, generate a short and clear English title that accurately reflects the video's content. "
+            "The title should be between 4 and 10 words, use proper capitalization, and avoid any quotation marks or punctuation at the beginning or end.\n\n"
+            f"Explanation:\n{explanation}"
+        )
+
+        messages: list[dict[str, str]] = [{"role": "system", "content": prompt}]
+
+        output = self.client.chat.completions.create(
+            model=self.model_for_explications,
+            messages=messages,
+        )
+
+        title = output.choices[0].message.content.strip()
+        return title
 
     def generate_code_from_video(self, video: Video) -> str:
         """
@@ -681,6 +708,8 @@ class OpenAIModel(BaseModel):
 
         for scene in video.scenes:
             for image in scene.images:
+                if not image.predictions:
+                    continue
                 for prediction in image.predictions:
                     prediction.explanation = self.generate_prediction_explanation(
                         prediction=prediction
@@ -689,22 +718,24 @@ class OpenAIModel(BaseModel):
             scene.explanation = self.generate_scene_explanation(scene=scene)
 
         video.explanation = self.generate_video_explanation(video=video)
-        categories = video.categories or []
+        video.title = self.generate_video_title(explanation=video.explanation)
+
+        categories: List[str] = video.categories or []
 
         if "code" in categories and not video.code:
-            video.code = self.generate_code_from_video(video)
+            video.code = self.generate_code_from_video(video=video)
 
         if "diagram" in categories and not video.diagram:
-            video.diagram = self.generate_flowchart_from_video(video)
+            video.diagram = self.generate_flowchart_from_video(video=video)
 
         if video.code and not video.diagram:
-            video.diagram = self.generate_flowchart_from_code(video.code)
+            video.diagram = self.generate_flowchart_from_code(code_text=video.code)
 
         if video.diagram and not video.code:
-            video.code = self.generate_code_from_flowchart(video.diagram)
+            video.code = self.generate_code_from_flowchart(diagram_text=video.diagram)
 
         if video.code:
-            video.excercies = self.generate_exercises_from_code(video)
-            video.approaches = self.generate_approaches_from_code(video)
+            video.exercises = self.generate_exercises_from_code(video=video)
+            video.approaches = self.generate_approaches_from_code(video=video)
 
         return video
