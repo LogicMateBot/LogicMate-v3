@@ -232,7 +232,7 @@ def explain_video(
             phi: Phi = Phi(model_name="microsoft/Phi-4-reasoning")
             video = phi.generate_explanation(video=video)
         case "gemma":
-            gemma: Gemma3 = Gemma3(model_name="gemma3:4b")
+            gemma: Gemma3 = Gemma3()
             video = gemma.generate_explanation(video=video)
         case "openai":
             if not openai_api_key:
