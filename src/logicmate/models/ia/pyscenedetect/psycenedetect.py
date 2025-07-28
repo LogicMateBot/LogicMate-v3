@@ -1,5 +1,7 @@
 import json
 import logging
+import os
+import shutil
 from typing import FrozenSet, List, Literal, Set, Tuple
 
 import numpy as np
@@ -84,17 +86,28 @@ class PySceneDetect(BaseModel):
 
     def open_and_set_video(self, video_path: str) -> VideoStream:
         """
-        Opens the video file and returns a VideoStream object.
+        Opens the video file, saves a copy to media/videos, and returns a VideoStream.
 
         Args:
-            path (str): The path to the video file.
+            video_path (str): The path to the video file.
 
         Returns:
             VideoStream: The opened video stream.
         """
         video: VideoStream = open_video(path=video_path)
         self.set_video(video=video)
-        logging.info(msg=f"Video opened: {video}")
+
+        videos_dir = DirectoryUtil.ensure_directory("media/videos")
+        filename = os.path.basename(video_path)
+        destination_path = os.path.join(videos_dir, filename)
+
+        if not os.path.exists(destination_path):
+            shutil.copy2(video_path, destination_path)
+            logging.info(f"Video copied to: {destination_path}")
+        else:
+            logging.info(f"Video already exists at: {destination_path}")
+
+        logging.info(f"Video opened: {video}")
         return video
 
     def detect_scenes(self) -> None:
