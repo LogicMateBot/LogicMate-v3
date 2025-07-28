@@ -62,8 +62,11 @@ def process_video_task(
     }
 
     try:
-        response: requests.Response = requests.post(
-            url="http://localhost:8000/", json=payload
+        api_url: str = config.get("API_URL", "http://localhost:8000/api/v1")
+        response = requests.post(
+            url=f"{api_url}/videos/",
+            json=payload,
+            headers={"Content-Type": "application/json"},
         )
         response.raise_for_status()
         logging.info(msg="Video successfully sent to backend.")
