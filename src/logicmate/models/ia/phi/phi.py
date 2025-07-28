@@ -21,7 +21,7 @@ class Phi(BaseModel):
     pipe: Pipeline = Field(default=None, description="The pipeline instance.")
     generation_args: dict = Field(
         default={
-            "max_new_tokens": 2048,
+            "max_new_tokens": 512,
             "return_full_text": False,
             "do_sample": False,
         },
