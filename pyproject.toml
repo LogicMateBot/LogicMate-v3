@@ -8,7 +8,7 @@ authors = [
 ]
 license = { text = "EULA: Evaluation and Non-Commercial Use License" }
 readme = "README.md"
-requires-python = "==3.10.18"
+requires-python = ">=3.10.10,<3.11"
 dependencies = [
     "pydantic (==2.11.1)",
     "torch (==2.6.0)",
@@ -27,6 +27,9 @@ dependencies = [
     "celery (>=5.5.3,<6.0.0)",
     "redis (>=6.2.0,<7.0.0)",
     "ruff (>=0.12.3,<0.13.0)",
+    "ollama (>=0.5.1,<0.6.0)",
+    "fastapi (>=0.116.1,<0.117.0)",
+    "uvicorn (>=0.35.0,<0.36.0)",
 ]
 
 [build-system]
