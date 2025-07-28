@@ -100,8 +100,8 @@ class Surya(BaseModel):
         )
 
         plt.imshow(X=cv2.cvtColor(src=image, code=cv2.COLOR_BGR2RGB))
-        plt.axis(arg="off")
-        plt.title(label=text)
+        plt.axis("off")
+        plt.title(text)
         plt.show()
 
     def clean_class_name(self, raw: str) -> str:
@@ -145,7 +145,9 @@ class Surya(BaseModel):
 
         return extracted_text, bounding_boxes, confidence
 
-    def predict_video(self, video: Video) -> Video:
+    def predict_video(
+        self, video: Video, show_result: bool, show_image: bool, show_text: bool
+    ) -> Video:
         if not video:
             raise ValueError("Video is required")
         if not video.scenes:
@@ -176,13 +178,13 @@ class Surya(BaseModel):
                         self.cropped_image_from_predictions(
                             image_path=image.path,
                             predictions=prediction,
-                            show_image=False,
-                            show_text=False,
+                            show_image=show_image,
+                            show_text=show_text,
                         )
                     )
                     extracted_text, _, _ = self.predict(
                         image=cropped_image_from_prediction,
-                        show_result=False,
+                        show_result=show_result,
                     )
 
                     prediction.text = extracted_text
