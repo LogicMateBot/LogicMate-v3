@@ -85,6 +85,7 @@ class Video(BaseModel):
         default=None, description="List of categories associated with the video"
     )
     scenes: List[Scene]
+    title: Optional[str] = Field(default=None, description="Title of the video")
     explanation: Optional[str] = Field(
         default=None, description="Explanation of the video"
     )
@@ -97,7 +98,7 @@ class Video(BaseModel):
     approaches: Optional[List[Approach]] = Field(
         default=None, description="List of approaches associated with the video"
     )
-    excercies: Optional[List[Exercise]] = Field(
+    exercises: Optional[List[Exercise]] = Field(
         default=None, description="List of exercises associated with the video"
     )
 
