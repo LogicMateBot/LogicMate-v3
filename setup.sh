@@ -156,6 +156,49 @@ else
     echo "Images directory already exists."
 fi
 
+# Install Ollama CLI and pull Gemma3 model
+# Check for ollama binary
+if command -v ollama >/dev/null 2>&1; then
+    echo "Ollama CLI found."
+else
+    echo "Installing Ollama CLI..."
+    curl -fsSL https://ollama.com/install.sh | sh
+    echo "Ollama CLI installed."
+fi
+
+# Verify ollama is callable
+ollama version >/dev/null 2>&1 && echo "Ollama version: $(ollama version)"
+
+# Check if gemma3:12b is already pulled
+if ollama list | grep -q "gemma3:12b"; then
+    echo "Gemma3 model already available."
+else
+    echo "Pulling Gemma3:12b..."
+    ollama pull gemma3:12b
+    echo "Gemma3 model downloaded."
+fi
+
+# Find free port for Ollama daemon
+PORT=11435
+while lsof -i tcp:"$PORT" >/dev/null 2>&1; do
+    echo "Port $PORT in use, trying next port..."
+    PORT=$((PORT + 1))
+done
+echo "Using port $PORT for Ollama daemon."
+
+# Export OLLAMA_HOST for Python SDK
+export OLLAMA_HOST="http://127.0.0.1:$PORT"
+echo "Set OLLAMA_HOST=$OLLAMA_HOST"
+
+# Start Ollama server in background
+echo "Starting Ollama server on port $PORT..."
+# shellcheck disable=SC2086
+OLLAMA_HOST="$OLLAMA_HOST" nohup ollama serve >/dev/null 2>&1 &
+echo "Ollama server launched."
+
+echo "Setup complete. You can now run your LogicMate bot."
+
+
 # Installing roff
 pip install ruff
 if [ $? -ne 0 ]; then
