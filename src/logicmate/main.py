@@ -4,6 +4,7 @@
 # ollama pull gemma3:12b
 
 from datetime import datetime, timedelta
+import requests
 import logging
 from celery import Celery
 from logicmate.models.video.video import Video
@@ -39,6 +40,35 @@ def process_video_task(
     )
 
     video: Video | None = start_bot(video_path="/tmp/video.mp4", config=config)
+
+    if video is None:
+        logging.error("Video processing failed. No result from bot.")
+        return
+
+    all_users: list[str] = users_emails + [current_user_email]
+
+    payload = {
+        "id": video.id,
+        "duration": video.duration,
+        "categories": video.categories,
+        "scenes": [scene.model_dump() for scene in video.scenes],
+        "title": video.title,
+        "explanation": video.explanation,
+        "code": video.code,
+        "diagram": video.diagram,
+        "approaches": [a.model_dump() for a in (video.approaches or [])],
+        "exercises": [e.model_dump() for e in (video.exercises or [])],
+        "users": all_users,
+    }
+
+    try:
+        response: requests.Response = requests.post(
+            url="http://localhost:8000/", json=payload
+        )
+        response.raise_for_status()
+        logging.info(msg="Video successfully sent to backend.")
+    except requests.RequestException as e:
+        logging.exception(msg=f"Failed to send video to backend: {e}")
 
 
 if __name__ == "__main__":
