@@ -3,11 +3,16 @@ from typing import List, Optional, Tuple
 from pydantic import BaseModel, Field
 from scenedetect.frame_timecode import FrameTimecode
 from scenedetect.video_stream import VideoStream
+from uuid import uuid4
 
 from logicmate.models.predictions.predictions.prediction import PredictionBase
 
 
 class ImageModel(BaseModel):
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        description="Unique identifier for the image",
+    )
     path: str
     categories: Optional[List[str]] = Field(
         default=None, description="Category of the image"
@@ -21,7 +26,10 @@ class ImageModel(BaseModel):
 
 
 class Scene(BaseModel):
-    scene_id: int
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        description="Unique identifier for the scene",
+    )
     start_timestamp: str
     end_timestamp: str
     categories: Optional[List[str]] = Field(
@@ -30,6 +38,43 @@ class Scene(BaseModel):
     images: List[ImageModel]
     explanation: Optional[str] = Field(
         default=None, description="Explanation of the scene"
+    )
+
+
+class Approach(BaseModel):
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        description="Unique identifier for the approach",
+    )
+    title: Optional[str] = Field(default=None, description="Title of the approach")
+    description: Optional[str] = Field(
+        default=None, description="General description of the approach"
+    )
+    originalCode: Optional[str] = Field(
+        default=None, description="Original implementation code"
+    )
+    originalCodeExplanation: Optional[str] = Field(
+        default=None, description="Explanation of the original implementation code"
+    )
+    newCode: Optional[str] = Field(
+        default=None, description="Improved implementation code"
+    )
+    newCodeExplanation: Optional[str] = Field(
+        default=None, description="Explanation of the improved implementation code"
+    )
+
+
+class Exercise(BaseModel):
+    id: str = Field(
+        default_factory=lambda: str(uuid4()),
+        description="Unique identifier for the approach",
+    )
+    title: Optional[str] = Field(default=None, description="Title of the exercise")
+    description: Optional[str] = Field(
+        default=None, description="Problem statement for the exercise"
+    )
+    solution: Optional[str] = Field(
+        default=None, description="Code solution to the exercise"
     )
 
 
@@ -42,6 +87,18 @@ class Video(BaseModel):
     scenes: List[Scene]
     explanation: Optional[str] = Field(
         default=None, description="Explanation of the video"
+    )
+    code: Optional[str] = Field(
+        default=None, description="Code associated with the video"
+    )
+    diagram: Optional[str] = Field(
+        default=None, description="Diagram associated with the video"
+    )
+    approaches: Optional[List[Approach]] = Field(
+        default=None, description="List of approaches associated with the video"
+    )
+    excercies: Optional[List[Exercise]] = Field(
+        default=None, description="List of exercises associated with the video"
     )
 
     @classmethod
@@ -67,7 +124,6 @@ class Video(BaseModel):
 
         for i, (start_time, end_time) in enumerate(iterable=scenes, start=1):
             scene = Scene(
-                scene_id=i,
                 start_timestamp=str(object=start_time.get_timecode()),
                 end_timestamp=str(object=end_time.get_timecode()),
                 images=[
