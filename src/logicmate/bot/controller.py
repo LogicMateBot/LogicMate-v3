@@ -3,6 +3,7 @@ import logging
 from inference_sdk import InferenceHTTPClient
 
 from logicmate.models.ia.dino.dino import Dino
+from logicmate.models.ia.gemma.gemma import Gemma3, Gemma3OCR
 from logicmate.models.ia.openai.openai import OpenAIModel
 from logicmate.models.ia.phi.phi import Phi
 from logicmate.models.ia.pyscenedetect.psycenedetect import PySceneDetect
@@ -143,7 +144,9 @@ def predict_code_snippet(
 
 def extract_video_text(
     video: Video,
+    model_to_use: str,
     show_result: bool = False,
+    show_image: bool = False,
     show_text: bool = False,
 ) -> Video:
     """
@@ -155,11 +158,27 @@ def extract_video_text(
     Returns:
         Video: The processed video with extracted text.
     """
-    surya = Surya()
-    video = surya.predict_video(
-        video=video, show_result=show_result, show_text=show_text
-    )
+    # return video
 
+    match model_to_use:
+        case "surya":
+            surya: Surya = Surya()
+            video = surya.predict_video(
+                video=video,
+                show_result=show_result,
+                show_image=show_image,
+                show_text=show_text,
+            )
+        case "gemma":
+            gemma = Gemma3OCR()
+            video = gemma.predict_video(
+                video=video,
+                show_result=show_result,
+                show_text=show_text,
+                show_image=show_image,
+            )
+        case _:
+            raise ValueError(f"Unknown model: {model_to_use}")
     return video
 
 
@@ -210,8 +229,11 @@ def explain_video(
 
     match model_to_use:
         case "phi":
-            phi: Phi = Phi(model_name="microsoft/Phi-4-mini-instruct")
+            phi: Phi = Phi(model_name="microsoft/Phi-4-reasoning")
             video = phi.generate_explanation(video=video)
+        case "gemma":
+            gemma: Gemma3 = Gemma3(model_name="gemma3:4b")
+            video = gemma.generate_explanation(video=video)
         case "openai":
             if not openai_api_key:
                 raise ValueError("OpenAI API key is not set.")
@@ -255,7 +277,7 @@ def start_bot(video_path: str, config: dict[str, str]) -> Video | None:
     video = codeDiagramDetector.predict_from_video(
         video=video,
         use_client=False,
-        show_result=True,
+        show_result=False,
     )
 
     if not video.categories:
@@ -279,7 +301,7 @@ def start_bot(video_path: str, config: dict[str, str]) -> Video | None:
         video=video,
         client=CLIENT,
         use_client=False,
-        show_result=True,
+        show_result=False,
     )
     if result is None:
         logging.warning(
@@ -289,7 +311,9 @@ def start_bot(video_path: str, config: dict[str, str]) -> Video | None:
 
     video = result
 
-    video = extract_video_text(video=video, show_result=True, show_text=True)
+    video = extract_video_text(
+        video=video, model_to_use="surya", show_result=True, show_text=True
+    )
 
     video = explain_video(
         video=video, model_to_use="openai", openai_api_key=openai_api_key
