@@ -43,7 +43,7 @@ class Scene(BaseModel):
 
 class Approach(BaseModel):
     id: str = Field(
-        default_factory=lambda: str(uuid4()),
+        default_factory=lambda: str(object=uuid4()),
         description="Unique identifier for the approach",
     )
     title: Optional[str] = Field(default=None, description="Title of the approach")
