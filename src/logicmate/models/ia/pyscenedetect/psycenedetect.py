@@ -97,17 +97,17 @@ class PySceneDetect(BaseModel):
         video: VideoStream = open_video(path=video_path)
         self.set_video(video=video)
 
-        videos_dir = DirectoryUtil.ensure_directory("media/videos")
-        filename = os.path.basename(video_path)
-        destination_path = os.path.join(videos_dir, filename)
+        videos_dir: str = DirectoryUtil.ensure_directory(path="media/videos")
+        filename: str = os.path.basename(p=video_path)
+        destination_path: str = os.path.join(videos_dir, filename)
 
-        if not os.path.exists(destination_path):
-            shutil.copy2(video_path, destination_path)
-            logging.info(f"Video copied to: {destination_path}")
+        if not os.path.exists(path=destination_path):
+            shutil.copy2(src=video_path, dst=destination_path)
+            logging.info(msg=f"Video copied to: {destination_path}")
         else:
-            logging.info(f"Video already exists at: {destination_path}")
+            logging.info(msg=f"Video already exists at: {destination_path}")
 
-        logging.info(f"Video opened: {video}")
+        logging.info(msg=f"Video opened: {video}")
         return video
 
     def detect_scenes(self) -> None:
@@ -189,13 +189,16 @@ class PySceneDetect(BaseModel):
             Video: The processed video with detected scenes.
         """
         self.open_and_set_video(video_path=video_path)
-        return self.detect_and_save_scenes(output_dir=output_dir)
+        video: Video = self.detect_and_save_scenes(output_dir=output_dir)
+
+        video.src = f"media/videos/{os.path.basename(p=video_path)}"
+
+        return video
 
 
 if __name__ == "__main__":
     path_to_file = "media/videos/6c26a5d1-5f67-4752-b1a4-7b5911cdd157.mp4"
 
-    # Example usage
     file_exist, file_path, file_name = FileUtil.file_exists(path=path_to_file)
     if not file_exist:
         raise FileNotFoundError(f"File not found: {path_to_file}")
@@ -204,10 +207,8 @@ if __name__ == "__main__":
         path=f"media/images/{file_name}/scenes"
     )
 
-    # Create a PySceneDetect instance
     scene_detector: PySceneDetect = PySceneDetect()
 
-    # Process the video
     video: Video = scene_detector.process_video(
         video_path=file_path, output_dir=output_dir
     )
