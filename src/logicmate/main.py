@@ -53,6 +53,7 @@ def process_video_task(
         "categories": video.categories,
         "scenes": [scene.model_dump() for scene in video.scenes],
         "title": video.title,
+        "src": "media/videos/" + video.id + ".mp4",
         "explanation": video.explanation,
         "code": video.code,
         "diagram": video.diagram,
