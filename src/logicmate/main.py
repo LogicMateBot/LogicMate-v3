@@ -42,7 +42,7 @@ def process_video_task(
     video: Video | None = start_bot(video_path="/tmp/video.mp4", config=config)
 
     if video is None:
-        logging.error("Video processing failed. No result from bot.")
+        logging.error(msg="Video processing failed. No result from bot.")
         return
 
     all_users: list[str] = users_emails + [current_user_email]
